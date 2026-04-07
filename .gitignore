@@ -1,0 +1,6 @@
+# Claude Code generated files
+backups/
+todos/
+cache/
+plugins/
+*.backup.*
