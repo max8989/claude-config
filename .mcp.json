@@ -4,16 +4,12 @@
       "command": "npx",
       "args": ["-y", "chrome-devtools-mcp@latest"]
     },
-    "github-intel": {
-      "command": "/home/maxime/repos/mcp-server-github-intel/.venv/bin/python",
-      "args": ["/home/maxime/repos/mcp-server-github-intel/server.py"]
-    },
     "git": {
       "command": "uvx",
       "args": ["mcp-server-git"]
     },
     "github": {
-      "command": "/home/maxime/.local/bin/github-mcp-server",
+      "command": "/home/maxime/repos/claude-configs/bin/github-mcp-server",
       "args": ["stdio"]
     },
     "supabase": {

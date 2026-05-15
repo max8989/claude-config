@@ -26,7 +26,8 @@ run_stow() {
   stow --dir="$STOW_DIR" --target="$TARGET" --ignore="$IGNORE_REGEX" "$@" "$PKG"
 }
 
-case "${1:-stow}" in
+ACTION="${1:-stow}"
+case "$ACTION" in
   stow)     run_stow --restow ;;
   unstow)   run_stow --delete ;;
   adopt)    run_stow --adopt && run_stow --restow ;;
@@ -37,4 +38,4 @@ case "${1:-stow}" in
     ;;
 esac
 
-echo "done: $1 (package=$PKG target=$TARGET)"
+echo "done: $ACTION (package=$PKG target=$TARGET)"

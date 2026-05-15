@@ -10,21 +10,33 @@ Stow-managed Claude Code configuration: global instructions, settings, and MCP s
   settings.json       # theme, default permission mode, enabled plugins
   settings.local.json # per-host overrides (which .mcp.json servers to enable)
 .mcp.json             # project-level MCP server definitions
-stow.sh               # symlink wrapper around GNU stow
+vendor/               # git submodules (e.g. github-mcp-server source)
+bin/                  # built binaries (gitignored)
+install.sh            # one-shot setup: prompts for tokens, builds, stows
+stow.sh               # symlink wrapper around GNU stow (called by install.sh)
 ```
 
 ## Install
 
-### 1. Stow the configs into `~`
+### 1. Run the setup script
 
 ```bash
-./stow.sh           # symlink everything into ~
-./stow.sh simulate  # dry-run, prints what would happen
-./stow.sh adopt     # absorb existing ~ files into the repo, then symlink
-./stow.sh unstow    # remove the symlinks
+./install.sh
 ```
 
-If stow reports conflicts on first run, either back up the conflicting files in `~` or use `adopt` (then review the diff before committing).
+It will:
+
+1. Prompt for your **GitHub PAT** (with the scopes listed below) and **Supabase access token** — both inputs are hidden, blank skips.
+2. Persist them to your shell rc (`~/.bashrc`, `~/.zshrc`, or fish config) as `GITHUB_PERSONAL_ACCESS_TOKEN` and `SUPABASE_ACCESS_TOKEN`.
+3. Initialize the `vendor/github-mcp-server` submodule and build `bin/github-mcp-server` (needs Go on PATH).
+4. Run `stow.sh` to symlink the configs into `$HOME`.
+
+Token sources:
+
+- **GitHub PAT** — create at <https://github.com/settings/tokens>. Scopes: `repo`, `read:org`, `read:user`, and `workflow` if you want Actions tools.
+- **Supabase token** — create at <https://supabase.com/dashboard/account/tokens>.
+
+After it finishes: open a new shell (or `source` the rc file shown by the script) so the env vars are picked up.
 
 ### 2. Install the Claude Code plugins
 
@@ -59,25 +71,18 @@ LSP plugins also need their language server installed on the host:
 
 - [`context-mode`](https://github.com/mksglu/context-mode) — context-window optimizer (sandboxed tool output, FTS5 knowledge base, hook-based `curl`/`wget` blocking)
 
-### 3. Install the MCP server dependencies
+### 3. Install the remaining MCP server dependencies
 
-The servers in `.mcp.json` need their backing binaries on the host:
+`install.sh` handles `github`. The other servers in `.mcp.json` need their own backing binaries:
 
 | Server | Source | Setup |
 |--------|--------|-------|
 | `chrome-devtools` | `chrome-devtools-mcp` on npm | auto via `npx` |
 | `git` | `mcp-server-git` on PyPI | `pipx install uv` (provides `uvx`) |
-| `supabase` | `@supabase/mcp-server-supabase` on npm | auto via `npx`; needs `SUPABASE_ACCESS_TOKEN` in env |
-| `github` | [github/github-mcp-server](https://github.com/github/github-mcp-server) binary | download release to `~/.local/bin/github-mcp-server` |
+| `supabase` | `@supabase/mcp-server-supabase` on npm | auto via `npx` (token from `install.sh`) |
 | `github-intel` | local checkout of `mcp-server-github-intel` | clone to `~/repos/mcp-server-github-intel`, create `.venv`, install deps |
 
-### 4. Set environment variables
-
-Add to your shell rc:
-
-- `SUPABASE_ACCESS_TOKEN` — required by the `supabase` MCP server.
-
-### 5. Verify
+### 4. Verify
 
 Inside Claude Code:
 
@@ -87,3 +92,14 @@ Inside Claude Code:
 ```
 
 All servers should report `connected`; `ctx doctor` should be green across the board.
+
+## Maintenance
+
+Update the vendored `github-mcp-server`:
+
+```bash
+git submodule update --remote vendor/github-mcp-server
+(cd vendor/github-mcp-server && go build -o ../../bin/github-mcp-server ./cmd/github-mcp-server)
+```
+
+Re-stow after pulling repo changes: `./stow.sh` (idempotent — uses `--restow`).
