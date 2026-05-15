@@ -1,3 +1,0 @@
-[submodule "vendor/github-mcp-server"]
-	path = vendor/github-mcp-server
-	url = https://github.com/github/github-mcp-server.git

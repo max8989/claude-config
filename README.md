@@ -10,9 +10,8 @@ Stow-managed Claude Code configuration: global instructions, settings, and MCP s
   settings.json       # theme, default permission mode, enabled plugins
   settings.local.json # per-host overrides (which .mcp.json servers to enable)
 .mcp.json             # project-level MCP server definitions
-vendor/               # git submodules (e.g. github-mcp-server source)
-bin/                  # built binaries (gitignored)
-install.sh            # one-shot setup: prompts for tokens, builds, stows
+bin/                  # downloaded MCP server binaries (gitignored)
+install.sh            # one-shot setup: prompts for tokens, fetches binaries, stows
 stow.sh               # symlink wrapper around GNU stow (called by install.sh)
 ```
 
@@ -28,7 +27,7 @@ It will:
 
 1. Prompt for your **GitHub PAT** (with the scopes listed below) and **Supabase access token** — both inputs are hidden, blank skips.
 2. Persist them to your shell rc (`~/.bashrc`, `~/.zshrc`, or fish config) as `GITHUB_PERSONAL_ACCESS_TOKEN` and `SUPABASE_ACCESS_TOKEN`.
-3. Initialize the `vendor/github-mcp-server` submodule and build `bin/github-mcp-server` (needs Go on PATH).
+3. Download the latest `github-mcp-server` release for your OS/arch into `bin/` (needs the `gh` CLI; supports Linux x86_64/arm64/i386 and macOS x86_64/arm64).
 4. Run `stow.sh` to symlink the configs into `$HOME`.
 
 Token sources:
@@ -95,11 +94,6 @@ All servers should report `connected`; `ctx doctor` should be green across the b
 
 ## Maintenance
 
-Update the vendored `github-mcp-server`:
-
-```bash
-git submodule update --remote vendor/github-mcp-server
-(cd vendor/github-mcp-server && go build -o ../../bin/github-mcp-server ./cmd/github-mcp-server)
-```
+Upgrade `github-mcp-server` to the latest upstream release: just re-run `./install.sh` — it always fetches the latest release for your platform.
 
 Re-stow after pulling repo changes: `./stow.sh` (idempotent — uses `--restow`).

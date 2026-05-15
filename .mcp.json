@@ -9,8 +9,11 @@
       "args": ["mcp-server-git"]
     },
     "github": {
-      "command": "/home/maxime/repos/claude-configs/bin/github-mcp-server",
-      "args": ["stdio"]
+      "command": "${HOME}/repos/claude-configs/bin/github-mcp-server",
+      "args": ["stdio"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
     },
     "supabase": {
       "command": "npx",

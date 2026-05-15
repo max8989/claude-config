@@ -71,16 +71,37 @@ echo "==> Persisting env vars to $RC"
 write_var GITHUB_PERSONAL_ACCESS_TOKEN "$GITHUB_PAT"
 write_var SUPABASE_ACCESS_TOKEN "$SUPABASE_TOKEN"
 
-# ---- build the github-mcp-server submodule ---------------------------------
+# ---- download the latest github-mcp-server release -------------------------
 echo
-echo "==> Building vendored github-mcp-server"
-if command -v go >/dev/null 2>&1; then
-  git -C "$REPO_DIR" submodule update --init --recursive
-  (cd "$REPO_DIR/vendor/github-mcp-server" \
-    && go build -o "$REPO_DIR/bin/github-mcp-server" ./cmd/github-mcp-server)
-  echo "    built $REPO_DIR/bin/github-mcp-server"
-else
-  echo "    SKIP: Go not on PATH — install Go and rerun, or build manually."
+echo "==> Downloading github-mcp-server release binary"
+
+uname_s="$(uname -s)" uname_m="$(uname -m)"
+case "$uname_s-$uname_m" in
+  Linux-x86_64)        asset="Linux_x86_64.tar.gz"   ;;
+  Linux-aarch64|Linux-arm64) asset="Linux_arm64.tar.gz" ;;
+  Linux-i?86)          asset="Linux_i386.tar.gz"     ;;
+  Darwin-x86_64)       asset="Darwin_x86_64.tar.gz"  ;;
+  Darwin-arm64)        asset="Darwin_arm64.tar.gz"   ;;
+  *)
+    echo "    SKIP: no prebuilt release for $uname_s/$uname_m — fetch manually from"
+    echo "          https://github.com/github/github-mcp-server/releases/latest"
+    asset=""
+    ;;
+esac
+
+if [[ -n "$asset" ]]; then
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "    ERROR: gh CLI required for the release download. Install gh and rerun."
+    exit 1
+  fi
+  mkdir -p "$REPO_DIR/bin"
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "$tmpdir"' EXIT
+  gh release download --repo github/github-mcp-server \
+    --pattern "*${asset}" --dir "$tmpdir" --clobber
+  tar -xz -C "$tmpdir" -f "$tmpdir"/*"${asset}"
+  install -m 0755 "$tmpdir/github-mcp-server" "$REPO_DIR/bin/github-mcp-server"
+  echo "    installed $REPO_DIR/bin/github-mcp-server ($("$REPO_DIR/bin/github-mcp-server" --version 2>/dev/null | head -1 || echo 'ok'))"
 fi
 
 # ---- stow ------------------------------------------------------------------
