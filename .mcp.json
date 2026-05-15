@@ -16,9 +16,6 @@
       "command": "/home/maxime/.local/bin/github-mcp-server",
       "args": ["stdio"]
     },
-    "context-mode": {
-      "command": "context-mode"
-    },
     "supabase": {
       "command": "npx",
       "args": ["-y", "@supabase/mcp-server-supabase@latest"],
