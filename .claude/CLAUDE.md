@@ -3,6 +3,7 @@
 ## MCP Tools — Always Use These
 
 - **Context7 MCP**: Always use the Context7 MCP tool (`resolve-library-id` then `query-docs`) to look up documentation for any library or framework (Neovim, Lazy.nvim, Hyprland, Waybar, etc.). Do not rely on training data alone.
+- **GitHub MCP — pattern search for architectural calls**: When making a non-trivial architectural decision (project layout, abstraction choice, integration pattern) and there's no in-repo precedent or Context7 coverage, use `mcp__github__search_repositories` to find 2–3 recently-updated repos solving the same problem in the same language, and prefer their patterns over guessing from training data. Filters that matter, in order: same language → recently pushed (last ~12 months) → reasonable star count. Skip this for routine code — it's for "how should this be structured" calls, not "what's the syntax for X".
 
 # context-mode — MANDATORY routing rules
 
