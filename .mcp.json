@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    },
+    "github-intel": {
+      "command": "/home/maxime/repos/mcp-server-github-intel/.venv/bin/python",
+      "args": ["/home/maxime/repos/mcp-server-github-intel/server.py"]
+    },
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git"]
+    },
+    "github": {
+      "command": "/home/maxime/.local/bin/github-mcp-server",
+      "args": ["stdio"]
+    },
+    "context-mode": {
+      "command": "context-mode"
+    },
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server-supabase@latest"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
+    }
+  }
+}
