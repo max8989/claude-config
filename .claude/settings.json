@@ -1,5 +1,9 @@
 {
   "permissions": {
+    "deny": [
+      "WebFetch",
+      "WebSearch"
+    ],
     "defaultMode": "auto"
   },
   "enabledPlugins": {
@@ -9,8 +13,21 @@
     "vercel@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
     "lua-lsp@claude-plugins-official": true,
-    "csharp-lsp@claude-plugins-official": true
+    "csharp-lsp@claude-plugins-official": true,
+    "context-mode@context-mode": true
   },
   "theme": "dark",
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/home/maxime/.claude/hooks/context-mode-cache-heal.mjs\""
+          }
+        ]
+      }
+    ]
+  }
 }
