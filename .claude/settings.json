@@ -1,9 +1,5 @@
 {
   "permissions": {
-    "deny": [
-      "WebFetch",
-      "WebSearch"
-    ],
     "defaultMode": "auto"
   },
   "enabledPlugins": {
