@@ -92,6 +92,7 @@ echo "      • repo            (full control of private repos)"
 echo "      • read:org        (read org/team membership)"
 echo "      • read:user       (read profile info)"
 echo "      • workflow        (only if you'll trigger/inspect Actions)"
+echo "    Leave blank to skip the github MCP server entirely."
 read -rsp "    Paste token (hidden, blank = skip): " GITHUB_PAT
 echo
 
@@ -131,44 +132,64 @@ echo "==> Persisting env vars to $RC"
 write_var GITHUB_PERSONAL_ACCESS_TOKEN "$GITHUB_PAT"
 write_var SUPABASE_ACCESS_TOKEN "$SUPABASE_TOKEN"
 
+# ---- is a GitHub PAT available? --------------------------------------------
+# The github MCP server is only set up when a PAT exists: freshly entered,
+# already exported in the environment, or already persisted to the rc file.
+# With no PAT anywhere, the github MCP install (gh + binary) is skipped.
+HAVE_GH_PAT=0
+if [[ -n "$GITHUB_PAT" || -n "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]]; then
+  HAVE_GH_PAT=1
+elif (( IS_FISH )) && grep -q "^set -gx GITHUB_PERSONAL_ACCESS_TOKEN " "$RC"; then
+  HAVE_GH_PAT=1
+elif grep -q "^export GITHUB_PERSONAL_ACCESS_TOKEN=" "$RC"; then
+  HAVE_GH_PAT=1
+fi
+
 # ---- install prerequisites -------------------------------------------------
 echo
 echo "==> Installing prerequisites"
-ensure_cmd gh   gh   gh   gh   github-cli
 ensure_cmd stow stow stow stow stow
 ensure_uv
+if (( HAVE_GH_PAT )); then
+  ensure_cmd gh gh gh gh github-cli
+fi
 
 # ---- download the latest github-mcp-server release -------------------------
 echo
-echo "==> Downloading github-mcp-server release binary"
+if (( ! HAVE_GH_PAT )); then
+  echo "==> Skipping github MCP server (no GitHub PAT entered or saved)"
+  echo "    Re-run install.sh with a PAT to enable it."
+else
+  echo "==> Downloading github-mcp-server release binary"
 
-uname_s="$(uname -s)" uname_m="$(uname -m)"
-case "$uname_s-$uname_m" in
-  Linux-x86_64)        asset="Linux_x86_64.tar.gz"   ;;
-  Linux-aarch64|Linux-arm64) asset="Linux_arm64.tar.gz" ;;
-  Linux-i?86)          asset="Linux_i386.tar.gz"     ;;
-  Darwin-x86_64)       asset="Darwin_x86_64.tar.gz"  ;;
-  Darwin-arm64)        asset="Darwin_arm64.tar.gz"   ;;
-  *)
-    echo "    SKIP: no prebuilt release for $uname_s/$uname_m — fetch manually from"
-    echo "          https://github.com/github/github-mcp-server/releases/latest"
-    asset=""
-    ;;
-esac
+  uname_s="$(uname -s)" uname_m="$(uname -m)"
+  case "$uname_s-$uname_m" in
+    Linux-x86_64)        asset="Linux_x86_64.tar.gz"   ;;
+    Linux-aarch64|Linux-arm64) asset="Linux_arm64.tar.gz" ;;
+    Linux-i?86)          asset="Linux_i386.tar.gz"     ;;
+    Darwin-x86_64)       asset="Darwin_x86_64.tar.gz"  ;;
+    Darwin-arm64)        asset="Darwin_arm64.tar.gz"   ;;
+    *)
+      echo "    SKIP: no prebuilt release for $uname_s/$uname_m — fetch manually from"
+      echo "          https://github.com/github/github-mcp-server/releases/latest"
+      asset=""
+      ;;
+  esac
 
-if [[ -n "$asset" ]]; then
-  if ! command -v gh >/dev/null 2>&1; then
-    echo "    ERROR: gh CLI required for the release download. Install gh and rerun."
-    exit 1
+  if [[ -n "$asset" ]]; then
+    if ! command -v gh >/dev/null 2>&1; then
+      echo "    ERROR: gh CLI required for the release download. Install gh and rerun."
+      exit 1
+    fi
+    mkdir -p "$REPO_DIR/bin"
+    tmpdir="$(mktemp -d)"
+    trap 'rm -rf "$tmpdir"' EXIT
+    gh release download --repo github/github-mcp-server \
+      --pattern "*${asset}" --dir "$tmpdir" --clobber
+    tar -xz -C "$tmpdir" -f "$tmpdir"/*"${asset}"
+    install -m 0755 "$tmpdir/github-mcp-server" "$REPO_DIR/bin/github-mcp-server"
+    echo "    installed $REPO_DIR/bin/github-mcp-server ($("$REPO_DIR/bin/github-mcp-server" --version 2>/dev/null | head -1 || echo 'ok'))"
   fi
-  mkdir -p "$REPO_DIR/bin"
-  tmpdir="$(mktemp -d)"
-  trap 'rm -rf "$tmpdir"' EXIT
-  gh release download --repo github/github-mcp-server \
-    --pattern "*${asset}" --dir "$tmpdir" --clobber
-  tar -xz -C "$tmpdir" -f "$tmpdir"/*"${asset}"
-  install -m 0755 "$tmpdir/github-mcp-server" "$REPO_DIR/bin/github-mcp-server"
-  echo "    installed $REPO_DIR/bin/github-mcp-server ($("$REPO_DIR/bin/github-mcp-server" --version 2>/dev/null | head -1 || echo 'ok'))"
 fi
 
 # ---- set up the git MCP server (mcp-server-git, run via uvx) ----------------
