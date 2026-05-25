@@ -1,12 +1,72 @@
 #!/usr/bin/env bash
 # One-shot setup: prompts for tokens, persists them to your shell rc,
-# builds the vendored github-mcp-server, and stows configs into $HOME.
+# installs prerequisites (gh, stow, uv), downloads the github-mcp-server
+# binary, sets up the git MCP server, and stows configs into $HOME.
 #
+# Cross-platform: Linux (apt / dnf / pacman) and macOS (Homebrew).
 # Re-running is safe — existing entries are updated, not duplicated.
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OS="$(uname -s)"
+
+# ---- on macOS, surface Homebrew even if it's not yet on PATH ---------------
+if [[ "$OS" == "Darwin" ]] && ! command -v brew >/dev/null 2>&1; then
+  for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    [[ -x "$b" ]] && eval "$("$b" shellenv)" && break
+  done
+fi
+HAS_BREW=0
+command -v brew >/dev/null 2>&1 && HAS_BREW=1
+
+# ---- portable in-place sed (GNU takes no arg, BSD/macOS needs '') ----------
+sed_inplace() {
+  if sed --version >/dev/null 2>&1; then
+    sed -i "$@"               # GNU sed
+  else
+    local expr="$1"; shift
+    sed -i '' "$expr" "$@"    # BSD / macOS sed
+  fi
+}
+
+# ---- install a missing command via the platform package manager -----------
+# usage: ensure_cmd <cmd> <brew> <apt> <dnf> <pacman>
+ensure_cmd() {
+  local cmd="$1" brew_pkg="$2" apt_pkg="$3" dnf_pkg="$4" pac_pkg="$5"
+  command -v "$cmd" >/dev/null 2>&1 && return 0
+
+  echo "    $cmd not found — installing..."
+  if (( HAS_BREW )); then
+    brew install "$brew_pkg"
+  elif command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update -y && sudo apt-get install -y "$apt_pkg"
+  elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf install -y "$dnf_pkg"
+  elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --needed --noconfirm "$pac_pkg"
+  else
+    echo "    ERROR: no supported package manager found — install '$cmd' manually and rerun." >&2
+    return 1
+  fi
+}
+
+# ---- ensure uv/uvx (backs the git MCP server) ------------------------------
+ensure_uv() {
+  command -v uvx >/dev/null 2>&1 && return 0
+
+  echo "    uv not found — installing..."
+  if (( HAS_BREW )); then
+    brew install uv
+  elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --needed --noconfirm uv
+  else
+    # apt/dnf have no uv package — use the official standalone installer
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+  fi
+  # uv installs into ~/.local/bin; make it visible for the rest of this run
+  command -v uvx >/dev/null 2>&1 || export PATH="$HOME/.local/bin:$PATH"
+}
 
 # ---- detect the shell rc file to write env vars into -----------------------
 detect_rc() {
@@ -50,7 +110,7 @@ write_var() {
   if (( IS_FISH )); then
     line="set -gx $name $value"
     if grep -q "^set -gx $name " "$RC"; then
-      sed -i "s|^set -gx $name .*|$line|" "$RC"
+      sed_inplace "s|^set -gx $name .*|$line|" "$RC"
     else
       printf '\n%s\n' "$line" >> "$RC"
     fi
@@ -58,7 +118,7 @@ write_var() {
     line="export $name=\"$value\""
     if grep -q "^export $name=" "$RC"; then
       # use a separator unlikely to appear in tokens
-      sed -i "s|^export $name=.*|$line|" "$RC"
+      sed_inplace "s|^export $name=.*|$line|" "$RC"
     else
       printf '\n%s\n' "$line" >> "$RC"
     fi
@@ -70,6 +130,13 @@ echo
 echo "==> Persisting env vars to $RC"
 write_var GITHUB_PERSONAL_ACCESS_TOKEN "$GITHUB_PAT"
 write_var SUPABASE_ACCESS_TOKEN "$SUPABASE_TOKEN"
+
+# ---- install prerequisites -------------------------------------------------
+echo
+echo "==> Installing prerequisites"
+ensure_cmd gh   gh   gh   gh   github-cli
+ensure_cmd stow stow stow stow stow
+ensure_uv
 
 # ---- download the latest github-mcp-server release -------------------------
 echo
@@ -102,6 +169,17 @@ if [[ -n "$asset" ]]; then
   tar -xz -C "$tmpdir" -f "$tmpdir"/*"${asset}"
   install -m 0755 "$tmpdir/github-mcp-server" "$REPO_DIR/bin/github-mcp-server"
   echo "    installed $REPO_DIR/bin/github-mcp-server ($("$REPO_DIR/bin/github-mcp-server" --version 2>/dev/null | head -1 || echo 'ok'))"
+fi
+
+# ---- set up the git MCP server (mcp-server-git, run via uvx) ----------------
+echo
+echo "==> Setting up the git MCP server"
+if command -v uv >/dev/null 2>&1; then
+  # install it persistently so the first `uvx mcp-server-git` launch is instant
+  uv tool install --quiet mcp-server-git
+  echo "    mcp-server-git ready (launched as 'uvx mcp-server-git')"
+else
+  echo "    SKIP: uv unavailable — install uv, then it will be fetched on first use."
 fi
 
 # ---- stow ------------------------------------------------------------------

@@ -11,7 +11,7 @@ Stow-managed Claude Code configuration: global instructions, settings, and MCP s
   settings.local.json # per-host overrides (which .mcp.json servers to enable)
 .mcp.json             # project-level MCP server definitions
 bin/                  # downloaded MCP server binaries (gitignored)
-install.sh            # one-shot setup: prompts for tokens, fetches binaries, stows
+install.sh            # one-shot setup: prompts for tokens, installs prereqs, fetches binaries, stows
 stow.sh               # symlink wrapper around GNU stow (called by install.sh)
 ```
 
@@ -23,12 +23,14 @@ stow.sh               # symlink wrapper around GNU stow (called by install.sh)
 ./install.sh
 ```
 
-It will:
+Works on Linux (apt / dnf / pacman) and macOS (Homebrew). It will:
 
 1. Prompt for your **GitHub PAT** (with the scopes listed below) and **Supabase access token** — both inputs are hidden, blank skips.
 2. Persist them to your shell rc (`~/.bashrc`, `~/.zshrc`, or fish config) as `GITHUB_PERSONAL_ACCESS_TOKEN` and `SUPABASE_ACCESS_TOKEN`.
-3. Download the latest `github-mcp-server` release for your OS/arch into `bin/` (needs the `gh` CLI; supports Linux x86_64/arm64/i386 and macOS x86_64/arm64).
-4. Run `stow.sh` to symlink the configs into `$HOME`.
+3. Install prerequisites if missing — `gh`, `stow`, and `uv` — using Homebrew on macOS or the system package manager on Linux.
+4. Download the latest `github-mcp-server` release for your OS/arch into `bin/` (needs the `gh` CLI; supports Linux x86_64/arm64/i386 and macOS x86_64/arm64).
+5. Set up the **git** MCP server by installing `mcp-server-git` via `uv tool install`.
+6. Run `stow.sh` to symlink the configs into `$HOME`.
 
 Token sources:
 
@@ -72,12 +74,12 @@ LSP plugins also need their language server installed on the host:
 
 ### 3. Install the remaining MCP server dependencies
 
-`install.sh` handles `github`. The other servers in `.mcp.json` need their own backing binaries:
+`install.sh` handles `github` and `git`. The other servers in `.mcp.json` need their own backing binaries:
 
 | Server | Source | Setup |
 |--------|--------|-------|
 | `chrome-devtools` | `chrome-devtools-mcp` on npm | auto via `npx` |
-| `git` | `mcp-server-git` on PyPI | `pipx install uv` (provides `uvx`) |
+| `git` | `mcp-server-git` on PyPI | handled by `install.sh` (`uv tool install mcp-server-git`) |
 | `supabase` | `@supabase/mcp-server-supabase` on npm | auto via `npx` (token from `install.sh`) |
 | `github-intel` | local checkout of `mcp-server-github-intel` | clone to `~/repos/mcp-server-github-intel`, create `.venv`, install deps |
 
