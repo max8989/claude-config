@@ -20,7 +20,10 @@ if ! command -v stow >/dev/null 2>&1; then
 fi
 
 # Files at the repo root that are tooling/meta, not configs to stow into $HOME.
-IGNORE_REGEX='(^|/)(stow\.sh|README\.md|\.git|\.gitignore)$'
+# Keep the repository's root AGENTS.md for project-local discovery, but do not
+# replace an independently managed ~/AGENTS.md. The portable global entry point
+# and skills are installed below ~/.agents instead.
+IGNORE_REGEX='(^AGENTS\.md$|(^|/)(stow\.sh|README\.md|\.git|\.gitignore)$)'
 
 run_stow() {
   stow --dir="$STOW_DIR" --target="$TARGET" --ignore="$IGNORE_REGEX" "$@" "$PKG"

@@ -1,6 +1,8 @@
 # claude-configs
 
-Stow-managed Claude Code configuration: global instructions, settings, and MCP servers.
+Stow-managed configuration for Claude Code, Codex, and other tools that support
+the AGENTS.md and Agent Skills standards. Claude files remain the canonical
+source; the agent-standard files reference them.
 
 ## Layout
 
@@ -9,6 +11,9 @@ Stow-managed Claude Code configuration: global instructions, settings, and MCP s
   CLAUDE.md           # global instructions (loaded for every session)
   settings.json       # theme, default permission mode, enabled plugins
   settings.local.json # per-host overrides (which .mcp.json servers to enable)
+.agents/AGENTS.md      # ~/.agents entry point referencing .claude/CLAUDE.md
+.agents/skills/       # Agent Skills wrappers referencing .claude/skills
+AGENTS.md             # agent-standard instructions referencing .claude/CLAUDE.md
 .mcp.json             # project-level MCP server definitions
 bin/                  # downloaded MCP server binaries (gitignored)
 install.sh            # one-shot setup: prompts for tokens, installs prereqs, fetches binaries, stows
@@ -99,3 +104,10 @@ All servers should report `connected`; `ctx doctor` should be green across the b
 Upgrade `github-mcp-server` to the latest upstream release: just re-run `./install.sh` — it always fetches the latest release for your platform.
 
 Re-stow after pulling repo changes: `./stow.sh` (idempotent — uses `--restow`).
+
+The stow step, invoked automatically by `install.sh`, installs the portable
+entry point at `~/.agents/AGENTS.md` and skill wrappers under
+`~/.agents/skills/`. The repository-root `AGENTS.md` supports project-local
+discovery but is not stowed over an independently managed `~/AGENTS.md`. Tools
+that implement these standards can therefore reuse the Claude instructions
+without maintaining duplicate copies.

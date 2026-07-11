@@ -203,9 +203,9 @@ else
   echo "    SKIP: uv unavailable — install uv, then it will be fetched on first use."
 fi
 
-# ---- stow ------------------------------------------------------------------
+# ---- stow Claude and agent-standard configs --------------------------------
 echo
-echo "==> Stowing configs into \$HOME"
+echo "==> Stowing Claude and agent-standard configs into \$HOME"
 "$REPO_DIR/stow.sh"
 
 # ---- done ------------------------------------------------------------------
