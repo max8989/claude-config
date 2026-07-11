@@ -29,6 +29,12 @@
 
 If `context-mode:context-mode` is not in the available-skills list, the project does not have context-mode installed — use Bash / WebFetch / Grep directly.
 
+## Internet research — use the agent-reach skill
+
+**Before any internet research or platform lookup**, invoke the `agent-reach` skill first. Triggers: "research X", "search the web for X", "look this up", "see what people say about X", or any mention of / URL from Twitter/X, Reddit, Facebook, Instagram, YouTube, GitHub, Bilibili, XiaoHongShu, Xiaoyuzhou Podcast, LinkedIn, V2EX, Xueqiu, or RSS feeds. Run `agent-reach doctor --json` to see which backend serves each platform.
+
+**Not** for writing reports/analysis/translation (it only fetches content), write operations (posting/commenting/liking), or platforms covered by a dedicated skill (prefer that skill). If `agent-reach` is not in the available-skills list, it isn't installed on that machine — fall back to normal web tools (still routed through context-mode per the rules above).
+
 ## Slash commands
 
 User-triggered context-mode commands (only present where context-mode is installed): `/ctx-stats`, `/ctx-doctor`, `/ctx-upgrade`, `/ctx-purge`, `/ctx-insight`, `/context-mode`.
