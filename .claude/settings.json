@@ -2,18 +2,7 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "enabledPlugins": {
-    "context7@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "figma@claude-plugins-official": true,
-    "vercel@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "lua-lsp@claude-plugins-official": true,
-    "csharp-lsp@claude-plugins-official": true,
-    "context-mode@context-mode": true
-  },
-  "theme": "dark",
-  "skipAutoPermissionPrompt": true,
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -25,5 +14,22 @@
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "figma@claude-plugins-official": true,
+    "vercel@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true,
+    "csharp-lsp@claude-plugins-official": true,
+    "context-mode@context-mode": true,
+    "skill-creator@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
+  },
+  "tui": "fullscreen",
+  "theme": "dark",
+  "editorMode": "vim",
+  "skipAutoPermissionPrompt": true
 }
