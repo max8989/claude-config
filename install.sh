@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-shot setup: prompts for tokens, persists them to your shell rc,
-# installs prerequisites (gh, stow, uv), downloads the github-mcp-server
+# installs prerequisites (gh, stow, uv, OpenCLI), downloads the github-mcp-server
 # binary, sets up the git MCP server, and stows configs into $HOME.
 #
 # Cross-platform: Linux (apt / dnf / pacman) and macOS (Homebrew).
@@ -150,8 +150,25 @@ echo
 echo "==> Installing prerequisites"
 ensure_cmd stow stow stow stow stow
 ensure_uv
+ensure_cmd npm node npm npm npm
 if (( HAVE_GH_PAT )); then
   ensure_cmd gh gh gh gh github-cli
+fi
+
+# ---- install OpenCLI (browser-session backend for Agent Reach) -------------
+echo
+echo "==> Installing OpenCLI"
+if command -v opencli >/dev/null 2>&1; then
+  echo "    OpenCLI already installed ($(opencli --version 2>/dev/null | head -1 || echo 'version unknown'))"
+else
+  npm install -g @jackwener/opencli
+  hash -r
+  if ! command -v opencli >/dev/null 2>&1; then
+    echo "    ERROR: OpenCLI installed but is not on PATH." >&2
+    echo "    Add npm's global bin directory to PATH, then rerun install.sh." >&2
+    exit 1
+  fi
+  echo "    OpenCLI installed ($(opencli --version 2>/dev/null | head -1 || echo 'ok'))"
 fi
 
 # ---- download the latest github-mcp-server release -------------------------
@@ -212,4 +229,7 @@ echo "==> Stowing Claude and agent-standard configs into \$HOME"
 echo
 echo "Setup complete."
 echo "Open a new shell, or run:  source \"$RC\""
+echo "For Reddit access, open Chrome, log in to reddit.com, and keep Chrome running."
+echo "Then verify with: opencli reddit search \"local LLM\" -f yaml"
+echo "Agent Reach status: agent-reach doctor --json"
 echo "Then inside Claude Code, install the plugins listed in README.md (step 2)."
