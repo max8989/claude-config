@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="__APP_LANG__">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- [FEATURE: ios] iOS standalone reads these media-scoped metas natively;
+         lib/theme.ts keeps them in sync when the user forces a theme. Colors
+         must match --bg in theme/variables.css. -->
+    <meta name="theme-color" content="__BG_LIGHT__" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="__BG_DARK__" media="(prefers-color-scheme: dark)" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- __FONT_LINK__ (swap or delete if using system fonts) -->
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>__APP_NAME__</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

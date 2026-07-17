@@ -1,0 +1,51 @@
+# Single-command stack: PocketBase (private) + Node API (only exposed service,
+# serves the built SPA) + a one-shot frontend build. No reverse proxy / TLS
+# here — front this with whatever the host already runs (nginx proxy manager,
+# Traefik, a platform ingress). HTTPS is required in production for service
+# workers and Web Push.
+services:
+  # Private: only the api service reaches PocketBase over the compose network.
+  pocketbase:
+    build: ./pocketbase
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    ports:
+      # PocketBase admin UI (/_/). Loopback-only by default; set
+      # PB_ADMIN_BIND=0.0.0.0 in .env only where a reverse proxy serves it over
+      # HTTPS. Never point the public app at this port.
+      - "${PB_ADMIN_BIND:-127.0.0.1}:${PB_ADMIN_PORT:-8093}:8090"
+    volumes:
+      - ./pocketbase/pb_data:/pb/pb_data
+      - ./pocketbase/pb_migrations:/pb/pb_migrations
+
+  # The only exposed service: REST API + SSE + serves the built SPA.
+  api:
+    build: ./api
+    restart: unless-stopped
+    depends_on:
+      - pocketbase
+    # env_file (not ${...} interpolation): empty same-name shell variables
+    # would otherwise shadow the .env values and crash the api at boot.
+    env_file: .env
+    environment:
+      PB_URL: http://pocketbase:8090
+      TZ: ${TZ}
+    ports:
+      - "${APP_PORT:-8090}:3000"
+    volumes:
+      - frontend_dist:/app/public:ro
+
+  # Builds the SPA into a shared volume the api serves, then exits.
+  # [FEATURE: web-push] VITE_VAPID_PUBLIC_KEY is baked in at build time.
+  frontend-build:
+    build:
+      context: ./frontend
+      args:
+        VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY}
+    volumes:
+      - frontend_dist:/out
+    restart: "no"
+
+volumes:
+  frontend_dist:
