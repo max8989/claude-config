@@ -153,6 +153,17 @@ supply the PNGs (or real artwork) before shipping.
   the app on the API port. Remind them HTTPS (via their own reverse proxy) is
   required for service workers and Web Push in production, and that this stack
   intentionally does not include TLS/proxy.
+- **If push is on, leave `VAPID_SUBJECT` as a real routable value** (an
+  `https:` URL or a `mailto:` on a real domain). Do NOT substitute the `.local`
+  admin email or any non-routable domain into it: Apple/iOS Web Push validates
+  the JWT `sub` and rejects `.local`/`.invalid`/`.internal` with `403
+  BadJwtToken`, silently dropping every push. Chrome/FCM accepts it, so the bug
+  is invisible until an iPhone tries — it breaks ONLY iOS, ONLY in production.
+- **iOS push testing caveat** (tell the user): Web Push on iOS 16.4+ works only
+  from a PWA **installed to the Home Screen** (Safari → Share → Add to Home
+  Screen), never a Safari tab, and only over HTTPS. FCM/Chrome succeeding does
+  not prove iOS works — verify the end-to-end send against a real
+  `web.push.apple.com` subscription and check for `403 BadJwtToken`.
 
 ## Notes
 

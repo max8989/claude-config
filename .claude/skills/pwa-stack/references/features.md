@@ -15,7 +15,10 @@ HTTPS and (on iOS) the app installed to the home screen.
 Include when on:
 - **Deps:** `web-push` (api), nothing extra on the client.
 - **Env:** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`,
-  `VITE_VAPID_PUBLIC_KEY` (generate with `npx web-push generate-vapid-keys`).
+  `VITE_VAPID_PUBLIC_KEY` (generate the keypair with
+  `npx web-push generate-vapid-keys`). Keep `VAPID_PUBLIC_KEY` ==
+  `VITE_VAPID_PUBLIC_KEY` (the client subscribes with the latter; the api signs
+  with the former — a mismatch = rejected pushes).
 - **DB:** `push_subscriptions` collection (in the init migration).
 - **API:** `push.ts` (configure VAPID + `sendToUsers`), `routes/push.ts`
   (subscribe/unsubscribe/status), a notify runner + a `node-cron` tick, and
@@ -23,6 +26,16 @@ Include when on:
 - **Client:** `lib/push.ts` (subscribe/status/unsubscribe), the two `sw.ts`
   listeners (`push`, `notificationclick`), and the Notifications toggle in the
   profile/settings page.
+
+**iOS gotcha — `VAPID_SUBJECT` must be routable.** Apple's push service
+validates the VAPID JWT `sub` and returns `403 BadJwtToken` (dropping every
+push) if it is a non-routable domain — `.local`, `.invalid`, `.internal`, etc.
+Chrome/FCM accepts these, so the failure is invisible except on iOS in
+production. Set it to an `https:` URL or a `mailto:` on a real domain; never
+reuse the `admin@<slug>.local` PocketBase email. Also: iOS Web Push (16.4+)
+works only from a PWA installed to the Home Screen over HTTPS, not a Safari tab.
+When debugging, test the actual end-to-end send to a real `web.push.apple.com`
+subscription — an FCM success proves nothing about iOS.
 
 Omit when off: delete all of the above, the manifest still works, and the SW
 keeps only its precache + update logic.
