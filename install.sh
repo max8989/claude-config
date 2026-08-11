@@ -11,6 +11,16 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OS="$(uname -s)"
 
+# .mcp.json launches the github/git servers by absolute path, so the checkout
+# has to live where that file expects it.
+EXPECTED_DIR="$HOME/repos/claude-config"
+if [[ "$REPO_DIR" != "$EXPECTED_DIR" ]]; then
+  echo "WARNING: this checkout is at $REPO_DIR but .mcp.json launches its MCP"
+  echo "         servers from $EXPECTED_DIR. Move the repo there, or update the"
+  echo "         'command' paths in .mcp.json, or those servers will not start."
+  echo
+fi
+
 # ---- on macOS, surface Homebrew even if it's not yet on PATH ---------------
 if [[ "$OS" == "Darwin" ]] && ! command -v brew >/dev/null 2>&1; then
   for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
@@ -19,6 +29,21 @@ if [[ "$OS" == "Darwin" ]] && ! command -v brew >/dev/null 2>&1; then
 fi
 HAS_BREW=0
 command -v brew >/dev/null 2>&1 && HAS_BREW=1
+
+# ---- NixOS: nothing is installed imperatively ------------------------------
+# On NixOS there is no package manager to shell out to — packages come from the
+# system flake. So instead of installing, we collect what's missing and print a
+# ready-to-paste list at the end. MISSING_NIX holds "cmd -> nixpkgs attribute".
+IS_NIXOS=0
+if [[ -e /etc/NIXOS ]] || command -v nixos-rebuild >/dev/null 2>&1; then
+  IS_NIXOS=1
+fi
+MISSING_NIX=()
+
+note_missing_nix() {
+  MISSING_NIX+=("$1")
+  echo "    $2 not found — add '$1' to your NixOS/Home Manager package list."
+}
 
 # ---- portable in-place sed (GNU takes no arg, BSD/macOS needs '') ----------
 sed_inplace() {
@@ -31,10 +56,15 @@ sed_inplace() {
 }
 
 # ---- install a missing command via the platform package manager -----------
-# usage: ensure_cmd <cmd> <brew> <apt> <dnf> <pacman>
+# usage: ensure_cmd <cmd> <brew> <apt> <dnf> <pacman> [nix-attr]
 ensure_cmd() {
-  local cmd="$1" brew_pkg="$2" apt_pkg="$3" dnf_pkg="$4" pac_pkg="$5"
+  local cmd="$1" brew_pkg="$2" apt_pkg="$3" dnf_pkg="$4" pac_pkg="$5" nix_pkg="${6:-$1}"
   command -v "$cmd" >/dev/null 2>&1 && return 0
+
+  if (( IS_NIXOS )); then
+    note_missing_nix "$nix_pkg" "$cmd"
+    return 0
+  fi
 
   echo "    $cmd not found — installing..."
   if (( HAS_BREW )); then
@@ -55,6 +85,11 @@ ensure_cmd() {
 ensure_uv() {
   command -v uvx >/dev/null 2>&1 && return 0
 
+  if (( IS_NIXOS )); then
+    note_missing_nix uv uv
+    return 0
+  fi
+
   echo "    uv not found — installing..."
   if (( HAS_BREW )); then
     brew install uv
@@ -69,14 +104,26 @@ ensure_uv() {
 }
 
 # ---- detect the shell rc file to write env vars into -----------------------
+# Under Home Manager the rc file is a symlink into /nix/store and is read-only,
+# so writing tokens into it fails. Those configs source a sibling ".local" file
+# for exactly this kind of machine-local secret — redirect there instead.
 detect_rc() {
+  local rc
   case "${SHELL##*/}" in
-    zsh)  echo "$HOME/.zshrc" ;;
-    fish) echo "$HOME/.config/fish/config.fish" ;;
-    *)    echo "$HOME/.bashrc" ;;
+    zsh)  rc="$HOME/.zshrc" ;;
+    fish) rc="$HOME/.config/fish/config.fish" ;;
+    *)    rc="$HOME/.bashrc" ;;
   esac
+
+  if [[ -L "$rc" && "$(readlink -f "$rc")" == /nix/store/* ]]; then
+    echo "$rc.local"
+  else
+    echo "$rc"
+  fi
 }
 RC="$(detect_rc)"
+RC_IS_LOCAL=0
+[[ "$RC" == *.local ]] && RC_IS_LOCAL=1
 IS_FISH=0
 [[ "$RC" == *fish/config.fish ]] && IS_FISH=1
 mkdir -p "$(dirname "$RC")"
@@ -129,6 +176,11 @@ write_var() {
 
 echo
 echo "==> Persisting env vars to $RC"
+if (( RC_IS_LOCAL )); then
+  echo "    (your real rc file is a read-only /nix/store symlink; using the"
+  echo "     machine-local override instead — make sure your shell config"
+  echo "     sources it. The zsh config in nixos-dotfiles sources ~/.zshrc.local.)"
+fi
 write_var GITHUB_PERSONAL_ACCESS_TOKEN "$GITHUB_PAT"
 write_var SUPABASE_ACCESS_TOKEN "$SUPABASE_TOKEN"
 
@@ -148,11 +200,25 @@ fi
 # ---- install prerequisites -------------------------------------------------
 echo
 echo "==> Installing prerequisites"
-ensure_cmd stow stow stow stow stow
+ensure_cmd stow stow stow stow stow stow
 ensure_uv
-ensure_cmd npm node npm npm npm
+ensure_cmd npm node npm npm npm nodejs
 if (( HAVE_GH_PAT )); then
-  ensure_cmd gh gh gh gh github-cli
+  ensure_cmd gh gh gh gh github-cli gh
+fi
+
+# ---- npm global prefix -----------------------------------------------------
+# nixpkgs' npm points its prefix at its own (read-only) store path, so a global
+# install fails with EACCES. Redirect to a writable prefix for this run; the
+# NixOS config makes the same setting permanent via NPM_CONFIG_PREFIX.
+if command -v npm >/dev/null 2>&1; then
+  npm_prefix="$(npm config get prefix 2>/dev/null || echo '')"
+  if [[ "$npm_prefix" == /nix/store/* ]]; then
+    export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+    export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+    mkdir -p "$NPM_CONFIG_PREFIX/bin"
+    echo "    npm prefix was read-only ($npm_prefix) — using $NPM_CONFIG_PREFIX"
+  fi
 fi
 
 # ---- install OpenCLI (browser-session backend for Agent Reach) -------------
@@ -176,6 +242,14 @@ echo
 if (( ! HAVE_GH_PAT )); then
   echo "==> Skipping github MCP server (no GitHub PAT entered or saved)"
   echo "    Re-run install.sh with a PAT to enable it."
+elif command -v github-mcp-server >/dev/null 2>&1; then
+  # Already provided by the system (packaged, or installed by hand). Link it
+  # into bin/ so .mcp.json keeps pointing at one stable path on every platform,
+  # and skip re-downloading a copy we already have.
+  echo "==> Using the system github-mcp-server (skipping release download)"
+  mkdir -p "$REPO_DIR/bin"
+  ln -sfn "$(command -v github-mcp-server)" "$REPO_DIR/bin/github-mcp-server"
+  echo "    linked $REPO_DIR/bin/github-mcp-server -> $(command -v github-mcp-server)"
 else
   echo "==> Downloading github-mcp-server release binary"
 
@@ -209,15 +283,30 @@ else
   fi
 fi
 
-# ---- set up the git MCP server (mcp-server-git, run via uvx) ----------------
+# ---- set up the git MCP server ---------------------------------------------
+# .mcp.json launches bin/mcp-server-git, so every platform has one stable path.
+# That entry is either a link to a system-provided binary or a shim over uvx.
 echo
 echo "==> Setting up the git MCP server"
-if command -v uv >/dev/null 2>&1; then
-  # install it persistently so the first `uvx mcp-server-git` launch is instant
+mkdir -p "$REPO_DIR/bin"
+if command -v mcp-server-git >/dev/null 2>&1; then
+  # Provided by the system (packaged, or installed by hand) — prefer it over
+  # having uv fetch a second copy plus its own CPython.
+  ln -sfn "$(command -v mcp-server-git)" "$REPO_DIR/bin/mcp-server-git"
+  echo "    linked $REPO_DIR/bin/mcp-server-git -> $(command -v mcp-server-git)"
+elif command -v uv >/dev/null 2>&1; then
+  # install it persistently so the first launch is instant
   uv tool install --quiet mcp-server-git
-  echo "    mcp-server-git ready (launched as 'uvx mcp-server-git')"
+  rm -f "$REPO_DIR/bin/mcp-server-git"
+  cat > "$REPO_DIR/bin/mcp-server-git" <<'SHIM'
+#!/usr/bin/env bash
+exec uvx mcp-server-git "$@"
+SHIM
+  chmod 0755 "$REPO_DIR/bin/mcp-server-git"
+  echo "    mcp-server-git ready (bin/mcp-server-git shims 'uvx mcp-server-git')"
 else
-  echo "    SKIP: uv unavailable — install uv, then it will be fetched on first use."
+  echo "    SKIP: neither mcp-server-git nor uv is available — the git MCP server"
+  echo "          will not start until one of them is installed."
 fi
 
 # ---- stow Claude and agent-standard configs --------------------------------
@@ -227,6 +316,14 @@ echo "==> Stowing Claude and agent-standard configs into \$HOME"
 
 # ---- done ------------------------------------------------------------------
 echo
+if (( ${#MISSING_NIX[@]} )); then
+  echo "==> Missing packages (NixOS installs nothing imperatively)"
+  echo "    Add these to home.packages / environment.systemPackages, rebuild,"
+  echo "    then re-run install.sh:"
+  echo
+  printf '      %s\n' "${MISSING_NIX[@]}"
+  echo
+fi
 echo "Setup complete."
 echo "Open a new shell, or run:  source \"$RC\""
 echo "For Reddit access, open Chrome, log in to reddit.com, and keep Chrome running."

@@ -23,15 +23,35 @@ fi
 # Keep the repository's root AGENTS.md for project-local discovery, but do not
 # replace an independently managed ~/AGENTS.md. The portable global entry point
 # and skills are installed below ~/.agents instead.
-IGNORE_REGEX='(^AGENTS\.md$|(^|/)(stow\.sh|README\.md|\.git|\.gitignore)$)'
+#
+# `bin/` holds the MCP server binaries that .mcp.json launches by absolute path
+# inside the repo — they are never meant to land in ~/bin.
+IGNORE_REGEX='(^AGENTS\.md$|^bin(/|$)|(^|/)(stow\.sh|install\.sh|README\.md|\.git|\.gitignore)$)'
 
 run_stow() {
   stow --dir="$STOW_DIR" --target="$TARGET" --ignore="$IGNORE_REGEX" "$@" "$PKG"
 }
 
+# A real file where stow wants to put a symlink aborts the whole run — and a
+# fresh machine reliably has some (Claude writes its own ~/.claude/settings.json
+# on first launch). Move those aside rather than failing or, worse, adopting
+# them into the repo. Symlinks are left alone: stow re-points its own.
+backup_conflicts() {
+  local stamp src rel target
+  stamp="$(date +%Y%m%d-%H%M%S)"
+  while IFS= read -r src; do
+    rel="${src#"$REPO_DIR"/}"
+    [[ "$rel" =~ $IGNORE_REGEX ]] && continue
+    target="$TARGET/$rel"
+    [[ -e "$target" && ! -L "$target" && ! -d "$target" ]] || continue
+    mv "$target" "$target.pre-stow-$stamp"
+    echo "  moved existing $target -> $target.pre-stow-$stamp"
+  done < <(find "$REPO_DIR" -type f -not -path "$REPO_DIR/.git/*")
+}
+
 ACTION="${1:-stow}"
 case "$ACTION" in
-  stow)     run_stow --restow ;;
+  stow)     backup_conflicts; run_stow --restow ;;
   unstow)   run_stow --delete ;;
   adopt)    run_stow --adopt && run_stow --restow ;;
   simulate) run_stow --simulate --verbose --restow ;;

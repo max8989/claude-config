@@ -28,7 +28,7 @@ stow.sh               # symlink wrapper around GNU stow (called by install.sh)
 ./install.sh
 ```
 
-Works on Linux (apt / dnf / pacman) and macOS (Homebrew). It will:
+Works on Linux (apt / dnf / pacman), NixOS, and macOS (Homebrew). It will:
 
 1. Prompt for your **GitHub PAT** (with the scopes listed below) and **Supabase access token** — both inputs are hidden, blank skips.
 2. Persist them to your shell rc (`~/.bashrc`, `~/.zshrc`, or fish config) as `GITHUB_PERSONAL_ACCESS_TOKEN` and `SUPABASE_ACCESS_TOKEN`.
@@ -43,6 +43,42 @@ Token sources:
 - **Supabase token** — create at <https://supabase.com/dashboard/account/tokens>.
 
 After it finishes: open a new shell (or `source` the rc file shown by the script) so the env vars are picked up.
+
+#### On NixOS
+
+`install.sh` installs nothing imperatively there — packages come from the system
+flake. It detects NixOS and adapts:
+
+| Step | Behaviour on NixOS |
+|------|--------------------|
+| Prerequisites | Not installed. Anything missing is collected and printed as a list of nixpkgs attributes to add to your config, then re-run. |
+| Token persistence | `~/.zshrc` is a read-only `/nix/store` symlink under Home Manager, so tokens go to `~/.zshrc.local` (which the zsh config sources) instead. |
+| `github-mcp-server` | Unchanged — the upstream release is a static Go binary and runs on NixOS as-is. If a copy is already on `PATH` it is symlinked into `bin/` and the download is skipped. |
+| `mcp-server-git` | Unchanged — `uv tool install` works on NixOS. `bin/mcp-server-git` is a shim over `uvx`, or a symlink if a `PATH` binary already exists. |
+| OpenCLI | npm's prefix is the read-only nodejs store path, so the install redirects to `$HOME/.npm-global`. |
+
+Packages to add to your NixOS / Home Manager config:
+
+```nix
+gh       # also performs the github-mcp-server release download
+nodejs   # OpenCLI
+uv       # mcp-server-git
+stow
+```
+
+nixpkgs also carries `github-mcp-server` and `mcp-server-git`; adding them is
+optional — `install.sh` will pick them up from `PATH` and skip fetching its own.
+
+and, so `npm install -g` works at all:
+
+```nix
+home.sessionVariables.NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.npm-global";
+home.sessionPath = [ "${config.home.homeDirectory}/.npm-global/bin" ];
+```
+
+> The MCP servers are launched by absolute path from `.mcp.json`, so the
+> checkout must live at `~/repos/claude-config` (the script warns if it does
+> not).
 
 ### 2. Install the Claude Code plugins
 

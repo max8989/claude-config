@@ -8,7 +8,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/home/maxime/.claude/hooks/context-mode-cache-heal.mjs\""
+            "command": "h=\"$HOME/.claude/hooks/context-mode-cache-heal.mjs\"; [ -x \"$h\" ] && \"$h\" || true"
           }
         ]
       }
@@ -29,5 +29,7 @@
   "tui": "fullscreen",
   "theme": "dark",
   "editorMode": "vim",
+  "switchModelsOnFlag": true,
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true
 }
