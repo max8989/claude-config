@@ -57,7 +57,9 @@ the only trusted caller.
 The frontend's PocketBase client (`lib/pb.ts`) is **auth-only** —
 `new PocketBase("/")`. It is used purely for `authWithPassword` / `authRefresh`
 and to hold the auth token in `authStore`. Everything else goes through
-`lib/api.ts`, a typed `fetch` wrapper that attaches the bearer token.
+`lib/api.ts`, a typed `fetch` wrapper that attaches the bearer token. That
+client also owns the session lifecycle — expiry detection and the sliding
+`authRefresh` — see `patterns.md` §6, worth reading before writing either file.
 
 Why this shape:
 - **One trust boundary.** Business rules, validation, and authorization live in

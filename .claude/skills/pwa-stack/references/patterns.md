@@ -22,7 +22,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (pb.authStore.token) headers.set("authorization", `Bearer ${pb.authStore.token}`)
   const res = await fetch(path, { ...init, headers })
   if (!res.ok) {
-    if (res.status === 401 && pb.authStore.isValid) pb.authStore.clear()   // token died → app unmounts to login
+    if (res.status === 401) expireSession()   // token died → app unmounts to login
     let message = res.statusText
     try { message = (await res.json()).message ?? message } catch {}
     throw new ApiError(res.status, message)
@@ -30,6 +30,14 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.status === 204 ? (undefined as T) : (res.json() as Promise<T>)
 }
 ```
+
+**Never guard that 401 branch with `pb.authStore.isValid`.** `isValid` only
+checks the JWT's local `exp`, so it is already `false` for the single most
+common cause of a 401 — an expired token. Guarding on it means the one case you
+need to log out for is the one case that doesn't, and the app sits there
+mounted and "logged in", 401ing every request and rendering empty pages, with
+no way out but a manual logout. Clear unconditionally on 401; `expireSession()`
+(§6) is the shared exit so the login screen can explain itself.
 
 Rule: **components never call `fetch` or `pb.collection(...).getFullList` for
 data.** They call query/mutation hooks that call `api()`.
@@ -117,9 +125,12 @@ es.onopen = () => { if (connectedOnce) invalidate(); connectedOnce = true }   //
 ```
 
 EventSource can't set headers, so the token rides the query string and is
-validated by the same `requireUser` hook. The server sends a `:hb` comment
-heartbeat every ~25s so proxies don't reap idle connections. Defer invalidation
-while a mutation is in flight so a refetch can't clobber optimistic state.
+validated by the same `requireUser` hook. Key the effect on the `user` object so
+a token refresh (§6) re-opens the stream with the new token — a URL captured
+once would keep reconnecting with a token that eventually expires. The server
+sends a `:hb` comment heartbeat every ~25s so proxies don't reap idle
+connections. Defer invalidation while a mutation is in flight so a refetch can't
+clobber optimistic state.
 
 ---
 
@@ -129,12 +140,88 @@ while a mutation is in flight so a refetch can't clobber optimistic state.
   active members (name + avatar), the user picks themselves and enters a
   password. PocketBase `users.listRule = "active = true"` allows the pre-auth
   list.
-- `AuthContext` wraps `pb.authStore`: `user` comes from `authStore.record`, and
-  `authStore.onChange` re-renders on login/logout. A dead token anywhere calls
-  `authStore.clear()`, which unmounts the app back to the login screen.
+- `AuthContext` wraps `pb.authStore`: `user` comes from `authStore.record`
+  **gated on `authStore.isValid`**, and `authStore.onChange` re-renders on
+  login/logout. A dead token anywhere calls `expireSession()`, which unmounts
+  the app back to the login screen.
 - API side: a `requireUser` preHandler validates the bearer token by asking
   PocketBase to refresh it; `requireAdmin` [FEATURE: roles] additionally checks
   `req.user.role === "admin"`.
+
+### Session expiry — get this right the first time
+
+An installed PWA lives for months and is opened in bursts, so token expiry is a
+routine event, not an edge case. Three things must hold, and they are easy to
+get subtly wrong in a way that only shows up weeks after launch:
+
+**1. Never trust `authStore.record` on its own.** An expired token leaves both
+the token *and* the record sitting in localStorage — nothing prunes the store,
+and `isValid` only compares `exp` to the clock. Seed React state from
+`isValid ? record : null`, or the app mounts fully logged-in on a dead session.
+
+**2. Slide the session on every resume.** Tokens are stateless and expire a
+fixed time after *login*, no matter how heavily the app is used, so without a
+refresh the app dies mid-use on a schedule. `authRefresh()` mints a new token
+(resetting the clock) and doubles as a server-side check that the old one is
+still accepted. Fire it on mount and on `visibilitychange` → visible (what
+fires when an installed PWA returns from the app switcher), throttled to ~1/h.
+
+**3. Only an auth rejection ends a session.** A failed refresh from being
+offline or a server restart arrives as status `0` — logging out on that strands
+the user on a login screen they can't get past. Clear on `401`/`403` only.
+
+```ts
+// lib/pb.ts — session lifecycle lives next to the client, not in React:
+// api.ts kills sessions from outside the tree, and the login screen needs to
+// know whether the last session ended by itself or by the user's own logout.
+let expired = false
+export const sessionExpired = () => expired
+export function expireSession() {           // ended on its own
+  if (pb.authStore.token) expired = true    // only flag if there was something to lose
+  pb.authStore.clear()
+}
+export function clearSessionExpired() { expired = false }   // login() and logout() reset it
+export function dropExpiredToken() {        // call on boot + on every resume
+  if (!pb.authStore.isValid && pb.authStore.record) expireSession()
+}
+
+// auth/AuthContext.tsx
+const REFRESH_EVERY_MS = 60 * 60 * 1000
+let lastRefresh = 0
+async function refreshSession() {
+  if (!pb.authStore.isValid || Date.now() - lastRefresh < REFRESH_EVERY_MS) return
+  lastRefresh = Date.now()
+  try { await pb.collection("users").authRefresh() }
+  catch (err) {
+    const status = (err as { status?: number } | null)?.status
+    if (status === 401 || status === 403) expireSession()
+    else lastRefresh = 0                    // offline/transient: retry on the next resume
+  }
+}
+useEffect(() => {
+  const check = () => { dropExpiredToken(); void refreshSession() }
+  check()
+  const onVisibility = () => { if (document.visibilityState === "visible") check() }
+  document.addEventListener("visibilitychange", onVisibility)
+  return () => document.removeEventListener("visibilitychange", onVisibility)
+}, [])
+```
+
+Expose `expired` from the context and have the login screen say so — one line
+in the app's language ("Session expired — please sign in again"). Otherwise a
+timed-out session reads as a bug: the user gets dumped back to a login form for
+no visible reason.
+
+The other half of this lives in the migration — `users.authToken.duration`
+(`templates/pocketbase/pb_migrations/0001_init.js`) sets the window the sliding
+refresh slides *within*. PocketBase's default is 5 days; the template raises it
+to 30. It's the one real trade-off here (a longer window means a token lifted
+off a lost phone stays usable longer), so state the number at hand-off rather
+than leaving the user to discover it.
+
+[FEATURE: realtime] If the SSE `EventSource` carries the token in its URL
+(§5), keep its `useEffect` keyed on the `user` object so a refresh re-opens the
+stream with the new token instead of leaving a stale one to expire mid-stream.
 
 ---
 

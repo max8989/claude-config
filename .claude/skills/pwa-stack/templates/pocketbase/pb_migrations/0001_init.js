@@ -15,6 +15,12 @@ migrate((app) => {
   // Anyone (even unauthenticated) may list active members for the login roster.
   users.listRule = "active = true"
   users.viewRule = "active = true"
+  // Session length. PocketBase issues stateless JWTs that die exactly
+  // `authToken.duration` seconds after login — the default is 5 days, which for
+  // an installed household PWA means it goes dead every week or two. 30 days,
+  // paired with the client-side sliding refresh (patterns.md §6), means a
+  // session only ends after 30 straight days of not opening the app.
+  users.authToken.duration = 2592000 // 30 days
   app.save(users)
 
   // --- items: the one example resource (rename to your domain) ---

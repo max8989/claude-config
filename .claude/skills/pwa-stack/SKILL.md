@@ -153,6 +153,13 @@ supply the PNGs (or real artwork) before shipping.
   the app on the API port. Remind them HTTPS (via their own reverse proxy) is
   required for service workers and Web Push in production, and that this stack
   intentionally does not include TLS/proxy.
+- **Tell them the session length** — the init migration sets
+  `users.authToken.duration` to 30 days and the client slides it forward on
+  every app open (`patterns.md` §6), so a session ends only after 30 straight
+  days away. Mention it so they can raise or lower it deliberately. Like the
+  VAPID bug below, a mishandled expiry is invisible until the first token dies
+  days after launch — and it surfaces as "the app shows empty pages until I log
+  out and back in", not as anything that looks like auth.
 - **If push is on, leave `VAPID_SUBJECT` as a real routable value** (an
   `https:` URL or a `mailto:` on a real domain). Do NOT substitute the `.local`
   admin email or any non-routable domain into it: Apple/iOS Web Push validates
