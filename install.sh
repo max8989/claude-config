@@ -237,6 +237,18 @@ else
   echo "    OpenCLI installed ($(opencli --version 2>/dev/null | head -1 || echo 'ok'))"
 fi
 
+# ---- install Agent Reach (router the agent-reach skill drives) --------------
+echo
+echo "==> Installing Agent Reach"
+if command -v agent-reach >/dev/null 2>&1; then
+  echo "    Agent Reach already installed ($(agent-reach --version 2>/dev/null | head -1 || echo 'version unknown'))"
+elif command -v uv >/dev/null 2>&1; then
+  uv tool install --quiet https://github.com/Panniantong/agent-reach/archive/main.zip
+  echo "    Agent Reach installed to ~/.local/bin (home.sessionPath must include it)"
+else
+  echo "    SKIP: uv not available — the agent-reach skill will have no CLI backend."
+fi
+
 # ---- download the latest github-mcp-server release -------------------------
 echo
 if (( ! HAVE_GH_PAT )); then
