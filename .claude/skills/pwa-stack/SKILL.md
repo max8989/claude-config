@@ -134,6 +134,47 @@ Only generate the code for the features that are ON (see `references/
 features.md`); omit the `[FEATURE: x]` blocks for features that are OFF, and
 leave the init migration / env / deps trimmed to match.
 
+#### Automatic PWA updates (required)
+
+Generated apps must apply new deployments automatically, without presenting an
+update toast, modal, or confirmation button. Reproduce the update flow from the
+reference app's commit `68333c015b9a5c0c02b2e7a1a8b57e3c9ca1d549`:
+
+- In `vite.config.ts`, set `registerType: "autoUpdate"` and define a unique
+  `__BUILD_VERSION__` for every build with
+  `JSON.stringify(Date.now().toString())`. This makes the generated service
+  worker differ even when the application assets are unchanged.
+- In `src/sw.ts`, declare and reference `__BUILD_VERSION__` so it remains in the
+  compiled worker, then call `self.skipWaiting()` unconditionally and use
+  Workbox's `clientsClaim()`.
+- Generate a headless `components/PwaAutoUpdate.tsx` that calls
+  `useRegisterSW({ immediate: true })`, calls `registration.update()` every 60
+  seconds, and checks again whenever `document.visibilityState` becomes
+  `"visible"`. Render this component once near the root of `App.tsx`.
+- Do not generate `ReloadPrompt`, `IonToast`, `needRefresh`, or any other
+  user-controlled update UI. The `autoUpdate` registration must reload an open
+  client as soon as the new worker activates.
+
+Keep the build constant available to both Vite compilation targets. A minimal
+configuration and worker setup is:
+
+```ts
+// vite.config.ts
+define: {
+  __BUILD_VERSION__: JSON.stringify(Date.now().toString()),
+},
+// inside VitePWA(...)
+registerType: "autoUpdate",
+```
+
+```ts
+// src/sw.ts
+declare const __BUILD_VERSION__: string
+console.info(`[SW] Build ${__BUILD_VERSION__}`)
+self.skipWaiting()
+clientsClaim()
+```
+
 ### 6. Icons
 
 Run `scripts/make-icons.sh <app>/frontend/public "<accent>" "<contrast>"
