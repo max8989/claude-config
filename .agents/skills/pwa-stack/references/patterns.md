@@ -84,7 +84,37 @@ const create = useMutation({
 ```
 
 The toast helper is one style for the whole app (`lib/toast.ts`): success =
-2s + checkmark, failure = 3s + alert icon + danger color, both bottom.
+2s + checkmark, failure = 3s + alert icon + danger color. Both are **anchored to
+the top** and **swipe-dismissible** — every toast goes through one
+`present()` that always sets `position: "top"` and `swipeGesture: "vertical"`,
+so no call site can opt out and drift:
+
+```ts
+import { toastController } from "@ionic/core/components/toast"
+
+const present = (message: string, opts: Partial<ToastOptions>) =>
+  toastController
+    .create({
+      message,
+      position: "top",
+      positionAnchor: "app-header",   // sits under the header, not over it
+      swipeGesture: "vertical",       // swipe up to dismiss (direction follows position)
+      ...opts,
+    })
+    .then((t) => t.present())
+
+export const toast = {
+  success: (m: string) => present(m, { duration: 2000, icon: checkmarkCircle, color: "success" }),
+  failure: (m: string) => present(m, { duration: 3000, icon: alertCircle, color: "danger" }),
+}
+```
+
+Top placement keeps toasts clear of the thumb zone and of the iOS home
+indicator; `swipeGesture` is position-aware, so the swipe direction flips
+automatically if the position ever changes. Give the app's `IonHeader` the
+`id="app-header"` that `positionAnchor` refers to — without an anchor a top
+toast overlaps the header on notched devices. On screens with no header, drop
+`positionAnchor`; the toast then respects the safe-area inset on its own.
 
 ---
 
@@ -178,6 +208,9 @@ variables are mapped to the brand tokens so components re-skin for free. See
 (Workbox `precacheAndRoute` + `clientsClaim`). Updates are **prompted**, never
 silent: a new SW stays `waiting` until the user taps a reload toast
 (`ReloadPrompt`), which posts `SKIP_WAITING` and reloads on `controllerchange`.
+It uses the same top placement as §3 but **no `swipeGesture` and no `duration`**
+— it must persist until the user chooses Reload or Later, and an accidental
+swipe would silently drop the update prompt.
 Never `skipWaiting()` unconditionally — it swaps precached assets under a
 running page and a later lazy chunk fetch 404s.
 
