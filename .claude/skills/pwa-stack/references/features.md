@@ -79,8 +79,6 @@ admin page/tab, and the `"admin" | "member"` union in `types.ts`.
 Make the installed iOS PWA feel native.
 
 Include when on:
-- `setupIonicReact({ swipeBackEnabled: false })` and suppress Ionic's
-  back-transition on iOS (the OS edge-swipe already animates it).
 - `viewport-fit=cover`, `user-scalable=no`, `maximum-scale=1`,
   `touch-action: manipulation`, `-webkit-text-size-adjust: 100%`.
 - Media-scoped `<meta name="theme-color">` tags kept in sync by `lib/theme.ts`.

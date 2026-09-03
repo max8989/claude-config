@@ -341,6 +341,88 @@ install steps are the entry point to notifications working at all.
 - **Skeletons** while queries load, not spinners.
 - **Lazy-load** every page except Login/Home; warm the likely-next chunks after
   first paint so tab switches don't flash the fallback.
-- [FEATURE: ios] Disable Ionic's JS swipe-back and suppress its back-transition
-  on iOS so it doesn't double up with the OS edge-swipe. `viewport-fit=cover` +
-  `touch-action: manipulation` + `user-scalable=no` for a chromeless feel.
+- [FEATURE: ios] `viewport-fit=cover` + `touch-action: manipulation` +
+  `user-scalable=no` for a chromeless feel.
+
+---
+
+## 13. Destructive actions: one app-wide confirmation sheet
+
+A misclick on a trash icon must never destroy data. Every destructive action
+(delete a record, remove a saved item, …) goes through **one** promise-based
+confirmation sheet — never the native `window.confirm`, and never a per-page
+modal copy.
+
+Copy `templates/frontend/src/components/ConfirmModal.tsx` verbatim. It exposes:
+
+- `ConfirmProvider` — rendered once near the root (inside `IonApp`, wrapping
+  the shell). It owns a single `IonModal` bottom sheet
+  (`breakpoints={[0, 1]}`, `initialBreakpoint={1}`).
+- `useConfirm()` — returns `confirm(opts) => Promise<boolean>`, so call sites
+  read linearly:
+
+```tsx
+const confirm = useConfirm()
+async function removeWithConfirm(id: string, label?: string) {
+  const ok = await confirm({
+    title: "Remove from review?",
+    message: label
+      ? `“${label}” and its progress will be deleted.`
+      : "This item and its progress will be deleted.",
+    confirmText: "Remove",
+  })
+  if (ok) removeSaved.mutate(id)
+}
+```
+
+Mechanics that matter:
+
+- The pending resolver lives in a ref and **resolves exactly once**: the
+  buttons `settle(true/false)`, and `onDidDismiss` (backdrop tap, sheet
+  swipe-down) settles `false` as a no-op if a button already resolved.
+  Dismissing is always a safe "no".
+- `danger` defaults to `true` — the confirm button renders `color="danger"`;
+  pass `danger: false` for non-destructive confirmations.
+- `hapticTap()` fires when the sheet opens, matching the write pattern (§3).
+- When several pages delete the same kind of thing, wrap the wording once
+  (e.g. a `useConfirmRemove(label?)` hook exported next to the provider) so
+  the copy stays identical everywhere.
+- Also route the "unsave" side of save/bookmark **toggles** through it when
+  unsaving loses server-side state (e.g. spaced-repetition progress) — a
+  toggle that silently discards progress is still a destructive action.
+
+Sheet styles are `ui-` classes in `variables.css` (theme-aware via tokens):
+
+```css
+ion-modal.ui-confirm-modal { --height: auto; --border-radius: 20px 20px 0 0; }
+.ui-confirm { padding: var(--sp-5) var(--sp-4) calc(var(--sp-4) + var(--ion-safe-area-bottom, 0px)); }
+.ui-confirm-title { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: var(--sp-2); }
+.ui-confirm-msg { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.4; }
+.ui-confirm-actions { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); }
+.ui-confirm-actions ion-button { flex: 1; margin: 0; }
+```
+
+---
+
+## 14. Pull-to-refresh on every tab-root page
+
+Users expect a mobile list to refresh on pull-down. One tiny component covers
+the whole app because server state is all TanStack Query (§2): copy
+`templates/frontend/src/components/PageRefresher.tsx` verbatim — an
+`IonRefresher` that `refetchQueries` every key prefix it's given and keeps the
+spinner up until they all settle.
+
+Render it as the **first child of `IonContent`** on every tab-root/list page,
+passing the key families that page displays:
+
+```tsx
+<IonContent fullscreen>
+  <PageRefresher queryKeys={[keys.podcasts, keys.stats, keys.lookups]} />
+  <div className="ui-content">…</div>
+</IonContent>
+```
+
+Use `refetchQueries` (not `invalidateQueries`): the returned promise resolves
+when the fetches finish, which is what holds the spinner honestly; invalidate
+alone would complete the refresher before new data arrives. Detail pages
+pushed on top of a tab don't need one unless they show list-like server state.

@@ -38,8 +38,9 @@ conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
 - `references/features.md` — what each optional feature adds/removes.
 - `templates/` — the **stable** boilerplate worth copying verbatim (compose,
   Dockerfiles, vite PWA config, index.html, tsconfigs, init migration,
-  `frontend/src/lib/install.ts`). These carry `__PLACEHOLDER__` tokens and
-  `[FEATURE: x]` markers.
+  `frontend/src/lib/install.ts`, `frontend/src/components/ConfirmModal.tsx`,
+  `frontend/src/components/PageRefresher.tsx`). These carry `__PLACEHOLDER__`
+  tokens and `[FEATURE: x]` markers.
 - `scripts/make-icons.sh` — generates placeholder PWA icons from an accent
   colour + letters.
 
@@ -187,6 +188,23 @@ console.info(`[SW] Build ${__BUILD_VERSION__}`)
 self.skipWaiting()
 clientsClaim()
 ```
+
+#### Confirmation sheet for destructive actions (required)
+
+No destructive action may fire straight from a tap — a misclick on a trash
+icon must not delete data. Copy
+`templates/frontend/src/components/ConfirmModal.tsx` verbatim, wrap the app
+shell in `ConfirmProvider` (inside `IonApp`), and route **every** delete/remove
+— including the "unsave" side of save toggles that lose server-side progress —
+through `await confirm({...})` before mutating. Add the `ui-confirm-*` sheet
+classes to `variables.css`. Wording, mechanics, and CSS: `patterns.md` §13.
+
+#### Pull-to-refresh on tab-root pages (required)
+
+Copy `templates/frontend/src/components/PageRefresher.tsx` verbatim and render
+it as the first child of `IonContent` on every tab-root/list page, passing that
+page's query-key families (e.g.
+`<PageRefresher queryKeys={[keys.items]} />`). Details: `patterns.md` §14.
 
 ### 6. Icons
 
