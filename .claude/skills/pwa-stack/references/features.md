@@ -87,6 +87,9 @@ Include when on:
 - Haptics on interactions.
 - Install instructions in the README (Share → Add to Home Screen, iOS 16.4+ for
   push).
+- The always-included install button (`patterns.md` §11) shows the iOS-specific
+  Share → Add to Home Screen steps; with `ios` on, make that branch the one you
+  verify on a real device, since iOS never fires `beforeinstallprompt`.
 
 Omit when off: keep default Ionic gestures/zoom; haptics can stay (harmless
 no-op) or go.
@@ -97,6 +100,7 @@ no-op) or go.
 
 Regardless of toggles: the API-fronts-PocketBase model, auth-only client + `api()`
 wrapper, TanStack Query with optimistic mutations + toasts + global loading bar,
-the token theme system with light/dark, the custom SW + prompt-to-update flow,
+the token theme system with light/dark, the custom SW + auto-update flow, the
+in-app install button on the settings page,
 the Fastify DI/route structure, the Docker Compose stack, and the one example
 resource wired end to end.

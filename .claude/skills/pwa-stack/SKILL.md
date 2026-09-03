@@ -37,8 +37,9 @@ conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
   light/dark palette from the user's answers.
 - `references/features.md` — what each optional feature adds/removes.
 - `templates/` — the **stable** boilerplate worth copying verbatim (compose,
-  Dockerfiles, vite PWA config, index.html, tsconfigs, init migration). These
-  carry `__PLACEHOLDER__` tokens and `[FEATURE: x]` markers.
+  Dockerfiles, vite PWA config, index.html, tsconfigs, init migration,
+  `frontend/src/lib/install.ts`). These carry `__PLACEHOLDER__` tokens and
+  `[FEATURE: x]` markers.
 - `scripts/make-icons.sh` — generates placeholder PWA icons from an accent
   colour + letters.
 
@@ -154,6 +155,18 @@ reference app's commit `68333c015b9a5c0c02b2e7a1a8b57e3c9ca1d549`:
 - Do not generate `ReloadPrompt`, `IonToast`, `needRefresh`, or any other
   user-controlled update UI. The `autoUpdate` registration must reload an open
   client as soon as the new worker activates.
+
+#### In-app install button (required)
+
+Every generated app must expose an explicit **Install app** button on its
+settings/profile page — see `patterns.md` §11. Copy
+`templates/frontend/src/lib/install.ts` verbatim to
+`<app>/frontend/src/lib/install.ts`, call `initInstall()` in `main.tsx` before
+`createRoot` (the event fires before any page mounts), and render the button
+with `useInstallState()`: native `promptInstall()` when `canPrompt`, otherwise a
+sheet with manual *Add to Home Screen* steps branching on `isIOS()`. Hide the
+whole section when `installed` is true. Style the sheet with the app's own `ui-`
+classes rather than importing another modal system.
 
 Keep the build constant available to both Vite compilation targets. A minimal
 configuration and worker setup is:

@@ -286,7 +286,54 @@ every ~30 min and on `visibilitychange` → visible.
 
 ---
 
-## 11. Small touches that carry the "native app" feel
+## 11. Install: an in-app "Install app" button on the settings page
+
+A PWA is only installable if the user finds the install affordance — the browser
+hides its own behind a menu, and iOS Safari has none at all. Every generated app
+therefore ships an explicit **Install app** button in its settings/profile page,
+backed by `lib/install.ts` (copy it verbatim from
+`templates/frontend/src/lib/install.ts`).
+
+How it works:
+
+- `initInstall()` runs in `main.tsx` **before React mounts** —
+  `beforeinstallprompt` often fires before the settings page has ever been
+  rendered, so a listener registered inside a component misses it.
+- It captures and `preventDefault()`s the event (killing Chrome's mini-infobar),
+  tracks `appinstalled`, and detects an already-installed session with
+  `display-mode: standalone` / `navigator.standalone`.
+- `useInstallState()` is a `useSyncExternalStore` over a **cached, referentially
+  stable snapshot** — recomputing the object per render loops the store.
+- The page calls `promptInstall()` when `canPrompt` is true (Chrome / Edge /
+  Android: native dialog, toast on `accepted`); otherwise it opens a small
+  bottom sheet with manual *Add to Home Screen* steps, branching on `isIOS()`
+  (Share → Add to Home Screen) vs generic (browser menu → Install app).
+- The whole section is hidden when `installed` is true, so the installed app
+  doesn't offer to install itself.
+
+```tsx
+const [showInstall, setShowInstall] = useState(false)
+const { canPrompt, installed } = useInstallState()
+
+async function handleInstall() {
+  if (canPrompt) {
+    if (await promptInstall()) toast.success("App installed 🎉")
+  } else {
+    setShowInstall(true)   // manual "Add to Home Screen" sheet
+  }
+}
+```
+
+`isIOS()` must treat iPadOS as iOS: iPadOS 13+ reports a `Macintosh` UA, so
+match `/Macintosh/` **plus** `navigator.maxTouchPoints > 1`.
+
+[FEATURE: web-push] On iOS this button is load-bearing beyond convenience —
+Web Push on iOS 16.4+ only works from a Home-Screen-installed PWA, so the
+install steps are the entry point to notifications working at all.
+
+---
+
+## 12. Small touches that carry the "native app" feel
 
 - **Haptics** (`lib/haptics.ts`): `navigator.vibrate` wrapped to be a silent
   no-op where unsupported (iOS Safari, desktop). Tap on writes, success pattern
