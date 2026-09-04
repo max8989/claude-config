@@ -461,3 +461,69 @@ Both halves are pure configuration — do **not** add popstate/history
 interception or any custom back-navigation guard on top (a guard was tried and
 removed; it caused regressions). Works identically on the react-router v5 and
 v6 integrations.
+
+---
+
+## 16. Editable list rows: swipe-to-reveal owner actions
+
+Any resource the user creates and may later **edit or delete** (their own
+items, series, entries, …) gets its row actions behind an iOS-style swipe, not
+inline buttons — the list stays clean, and destructive controls aren't one
+stray tap away. One component covers it everywhere; copy
+`templates/frontend/src/components/SlidingActions.tsx` verbatim.
+
+Usage — wrap the existing row markup; only rows the user owns get wrapped:
+
+```tsx
+{items.map((item) =>
+  item.mine ? (
+    <SlidingActions
+      key={item.id}
+      onEdit={() => setEditing(item)}            // optional — omit for delete-only
+      onDelete={() => void confirmDelete(item)}  // routes through useConfirm (§13)
+    >
+      {itemRow(item)}
+    </SlidingActions>
+  ) : (
+    itemRow(item)
+  ),
+)}
+```
+
+Mechanics that matter:
+
+- **Always pair with the §13 confirmation sheet**: `onDelete` awaits
+  `confirm({...})` and only then fires the mutation. The swipe reveals the
+  action; the sheet guards it. A full swipe-through (`onIonSwipe` on the
+  expandable option) triggers the same confirmed path as a tap.
+- **The reveal closes itself** before running the action (the `act` helper
+  calls `slidingRef.current?.close()` first). Without this the row stays stuck
+  half-open after the user cancels the confirm sheet — close on action, not on
+  outcome.
+- Edit opens an edit sheet/modal (same `ui-confirm-modal` bottom-sheet styling
+  as §13, with form fields and Cancel/Save); delete goes straight to the
+  confirm sheet.
+- Rows rendered as custom cards (a `Link`/`div` with `ui-row` classes) ride
+  inside a **transparent** `IonItem` so the revealed options match the card's
+  rounded silhouette — that's what the `ui-slide-item` variables do.
+
+Styles are `ui-` classes in `variables.css` (theme-aware via tokens):
+
+```css
+/* Swipeable card rows (owner edit/delete). The card .ui-row rides inside a
+   transparent ion-item so the revealed options share its rounded silhouette. */
+ion-item-sliding.ui-slide { border-radius: 14px; overflow: hidden; }
+.ui-slide ion-item.ui-slide-item {
+  --background: transparent;
+  --padding-start: 0; --padding-end: 0;
+  --inner-padding-start: 0; --inner-padding-end: 0;
+  --min-height: 0;
+  --border-width: 0; --inner-border-width: 0;
+}
+.ui-slide .ui-row { width: 100%; }
+ion-item-option.ui-slide-delete { background: var(--danger); color: #fff; font-size: 22px; }
+ion-item-option.ui-slide-edit { background: var(--ink-3); color: #fff; font-size: 22px; }
+```
+
+Match the row's `border-radius` to the app's own card radius. If rows sit in a
+flex column with `gap`, the sliding wrapper needs no margin of its own.

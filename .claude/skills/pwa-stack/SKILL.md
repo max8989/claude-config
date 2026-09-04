@@ -40,7 +40,8 @@ conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
 - `templates/` — the **stable** boilerplate worth copying verbatim (compose,
   Dockerfiles, vite PWA config, index.html, tsconfigs, init migration,
   `frontend/src/lib/install.ts`, `frontend/src/components/ConfirmModal.tsx`,
-  `frontend/src/components/PageRefresher.tsx`). These carry `__PLACEHOLDER__`
+  `frontend/src/components/PageRefresher.tsx`,
+  `frontend/src/components/SlidingActions.tsx`). These carry `__PLACEHOLDER__`
   tokens and `[FEATURE: x]` markers.
 - `scripts/make-icons.sh` — generates placeholder PWA icons from an accent
   colour + letters.
@@ -200,6 +201,19 @@ shell in `ConfirmProvider` (inside `IonApp`), and route **every** delete/remove
 through `await confirm({...})` before mutating. Add the `ui-confirm-*` sheet
 classes to `variables.css`. Wording, mechanics, and CSS: `patterns.md` §13.
 
+#### Swipe-to-reveal edit/delete on user-created rows (required)
+
+Whenever a resource the user creates can later be edited or deleted, the list
+row exposes those actions through an iOS-style swipe — never inline
+edit/trash buttons on the row. Copy
+`templates/frontend/src/components/SlidingActions.tsx` verbatim and wrap only
+the rows the current user owns (`item.mine`); pass `onEdit` (optional — opens
+an edit bottom sheet) and `onDelete` (must route through the ConfirmModal
+`await confirm({...})` above before mutating). The component closes the
+reveal itself when an option is chosen, so a cancelled confirm never leaves a
+row hanging open. Add the `ui-slide-*` classes to `variables.css`. Full
+mechanics, usage snippet, and CSS: `patterns.md` §16.
+
 #### Pull-to-refresh on tab-root pages (required)
 
 Copy `templates/frontend/src/components/PageRefresher.tsx` verbatim and render
@@ -249,7 +263,9 @@ supply the PNGs (or real artwork) before shipping.
 
 - Keep the `ui-` class prefix (or rename consistently) between `variables.css`
   and the generated pages.
-- `react-router` must stay v5 — `@ionic/react-router` depends on it.
+- Match `react-router` to the Ionic major: `@ionic/react-router` up to Ionic 8
+  needs v5; Ionic 9+ needs v6 (`react-router-dom` v6 APIs — `Routes`-style
+  `element` props, `useNavigate`). Confirm against the installed Ionic major.
 - The API runs TypeScript directly via `tsx` — there is no build step; the
   Dockerfile copies `src/` and runs `npm start`.
 - If the user wants a different backend (e.g. Supabase, Postgres+Prisma) or a
