@@ -426,3 +426,38 @@ Use `refetchQueries` (not `invalidateQueries`): the returned promise resolves
 when the fetches finish, which is what holds the spinner honestly; invalidate
 alone would complete the refresher before new data arrives. Detail pages
 pushed on top of a tab don't need one unless they show list-like server state.
+
+---
+
+## 15. Back navigation: the OS edge-swipe owns it, not Ionic
+
+Ionic's JS swipe-back gesture (on by default in iOS mode) **competes** with the
+OS edge-swipe that Safari / installed PWAs already translate into a real
+`history.back()`: one physical swipe triggers both, popping two history entries
+(landing on the tab root instead of the previous page) or freezing the screen
+mid-transition. Ionic's `goBack()` also falls back to `"/"` when its route
+bookkeeping is missing (deep link, reload). The native gesture alone always
+targets the true previous page, so disable Ionic's copy at setup:
+
+```tsx
+setupIonicReact({ swipeBackEnabled: false })
+```
+
+Second half of the pattern: on iOS the OS edge-swipe already animates the back
+navigation (the system slides in a snapshot of the previous page), then Ionic
+replays its own back transition on top — a visible double animation. Suppress
+Ionic's transition for back navigations on iOS; forward pushes keep the normal
+animation. Lives in the component rendering the outlet (inside
+`IonReactRouter`, since `useIonRouter` needs the router context):
+
+```tsx
+const { routeInfo } = useIonRouter()
+const animated = !(isPlatform("ios") && routeInfo?.routeDirection === "back")
+// ...
+<IonRouterOutlet animated={animated}>
+```
+
+Both halves are pure configuration — do **not** add popstate/history
+interception or any custom back-navigation guard on top (a guard was tried and
+removed; it caused regressions). Works identically on the react-router v5 and
+v6 integrations.

@@ -32,7 +32,8 @@ conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
   versions (a floor — confirm current majors before installing).
 - `references/patterns.md` — the house conventions (auth-only client + `api()`,
   optimistic-mutation-then-toast, global loading bar, SSE invalidation, theme
-  tokens, custom SW update flow, API DI/route shape, native touches).
+  tokens, custom SW update flow, API DI/route shape, native touches,
+  OS-owned swipe-back navigation).
 - `references/theme-tokens.md` — the CSS-token system and how to derive a
   light/dark palette from the user's answers.
 - `references/features.md` — what each optional feature adds/removes.
