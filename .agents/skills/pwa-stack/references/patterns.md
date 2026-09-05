@@ -4,6 +4,22 @@ These are the house rules that make the app feel consistent. Snippets show the
 **shape**, not a version-pinned copy — write current-API code that follows the
 convention. When a new project deviates, deviate on purpose.
 
+## Contents
+
+1. Data access
+2. Server state
+3. Optimistic writes and toasts
+4. Global loading bar
+5. Realtime invalidation
+6. Authentication
+7. API dependency injection
+8. Theme
+9. Service worker updates
+10. Web Push
+11. Native-feeling details
+12. Confirmation provider
+13. Localized metadata
+
 ---
 
 ## 1. Data access: auth-only PocketBase client + typed `api()` wrapper
@@ -237,9 +253,127 @@ every ~30 min and on `visibilitychange` → visible.
 - **Haptics** (`lib/haptics.ts`): `navigator.vibrate` wrapped to be a silent
   no-op where unsupported (iOS Safari, desktop). Tap on writes, success pattern
   on completion.
-- **Skeletons** while queries load, not spinners.
+- **Skeletons** while queries load, followed by an explicit error + Retry state
+  if the request fails. Never leave a failed query looking permanently busy.
 - **Lazy-load** every page except Login/Home; warm the likely-next chunks after
   first paint so tab switches don't flash the fallback.
 - [FEATURE: ios] Disable Ionic's JS swipe-back and suppress its back-transition
-  on iOS so it doesn't double up with the OS edge-swipe. `viewport-fit=cover` +
-  `touch-action: manipulation` + `user-scalable=no` for a chromeless feel.
+  on iOS so it doesn't double up with the OS edge-swipe.
+- Always use `viewport-fit=cover`, safe-area-aware custom chrome, and
+  `touch-action: manipulation`; preserve browser pinch zoom. Keep every control
+  at least 44×44 CSS px and test the tab bar, sheets, mini-panels, and
+  keyboard-open forms at 320 CSS px.
+- Build toolbar actions with `IonButtons` → `IonButton`, then a decorative
+  `IonIcon` and visible text. Do not place a raw styled `<button>` or custom
+  backdrop filter directly in an Ionic toolbar. Give the action at least 44 px
+  height and let the translucent `IonHeader` own its blur.
+
+```tsx
+<IonButtons slot="end">
+  <IonButton className="ui-toolbar-action" routerLink="/create" aria-label="Create item">
+    <IonIcon slot="start" icon={addOutline} aria-hidden="true" />
+    Create
+  </IonButton>
+</IonButtons>
+```
+
+Use a clear accent treatment instead of an opaque near-black capsule inside a
+translucent header:
+
+```css
+ion-button.ui-toolbar-action {
+  --background: transparent;
+  --background-activated: var(--accent-bg);
+  --color: var(--accent);
+  min-height: var(--tap-min, 44px);
+}
+```
+
+---
+
+## 12. Consequential actions: one app-wide confirmation provider
+
+Copy `templates/frontend/src/components/ConfirmModal.tsx` and its adjacent CSS,
+then mount `ConfirmProvider` once inside `IonApp`. Await `useConfirm()` before
+deletes, removals, irreversible toggles, abandoning a meaningful draft, and
+sign out:
+
+```tsx
+const confirm = useConfirm()
+
+async function signOut() {
+  const accepted = await confirm({
+    title: "Sign out?",
+    message: "You can sign in again on this device.",
+    confirmText: "Sign out",
+    danger: false,
+  })
+  if (accepted) logout()
+}
+```
+
+Backdrop dismissal, swipe-down, Escape, and Cancel resolve `false`; a confirm
+button resolves `true`. Resolve each request exactly once and do not fire the
+mutation or clear the auth store before `true`. Use specific consequence copy
+and destructive color only for destructive outcomes.
+
+Generate the corresponding token-based sheet styles. Include bottom safe-area
+padding, a real heading, side-by-side 44 px minimum action buttons, and a
+stacked action layout when translated labels do not fit.
+
+Add a component test for the shared provider itself: opening does not call the
+protected action; Cancel and backdrop dismissal resolve `false`; Confirm
+resolves `true` exactly once; a second request while one is open resolves
+safely without stranding either promise; and `danger: false` renders the
+non-destructive sign-out treatment.
+
+---
+
+## 13. Localized metadata: preserve raw values, select display centrally
+
+When UI language and content language differ, return both the original label
+and optional localized alternatives from every list/detail/filter DTO. Never
+replace or drop the original value in the API.
+
+Use one pure helper for presentation. For the default English UI, trim and
+prefer the English label, then fall back to the original label. Show the
+original as secondary text only when it is nonempty and differs. Bind editing
+forms to the raw fields, not the helper result. Keep study/media/user-authored
+content in its source language; apply the UI-language preference only to
+navigation and metadata such as titles, filters, and selects.
+
+Keep UI locale separate from content script or charset. For example, a
+Traditional/Simplified preference may transform the original fallback but must
+not decide whether the interface prefers English.
+
+Keep the selection logic pure and adapt field names at the API boundary:
+
+```ts
+type LocalizedLabel = {
+  label: string
+  labelEn?: string | null
+  number?: number | null
+}
+
+type TransformSource = (value: string) => string
+
+export function primaryLabel(item: LocalizedLabel, transform: TransformSource = (v) => v) {
+  return item.labelEn?.trim() || transform(item.label).trim() || "Untitled"
+}
+
+export function secondaryLabel(item: LocalizedLabel, transform: TransformSource = (v) => v) {
+  const english = item.labelEn?.trim()
+  const source = transform(item.label).trim()
+  return english && source && english !== source ? source : null
+}
+
+export function numberedLabel(item: LocalizedLabel, transform?: TransformSource) {
+  const prefix = item.number ? `${item.number}. ` : ""
+  return `${prefix}${primaryLabel(item, transform)}`
+}
+```
+
+Unit-test English preference, whitespace/null English fallback, source
+transformation, duplicate-secondary suppression, empty fallback, and optional
+numbering. Page tests must also prove that filters/selects use the helper while
+source-language content remains unchanged.

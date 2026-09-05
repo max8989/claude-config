@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Generate placeholder PWA icons (icon-192.png, icon-512.png) and icon.svg from
-# an accent color + a one/two-letter mark. Replace these with real artwork
+# Generate placeholder PWA icons (Apple 180px, manifest 192/512px) and icon.svg
+# from an accent color + a one/two-letter mark. Replace these with real artwork
 # before shipping. Usage:
 #   make-icons.sh <out_dir> <accent_hex> <fg_hex> <letters>
 # Example: make-icons.sh frontend/public "#2E9E7B" "#FFFFFF" "R"
@@ -9,10 +9,12 @@ set -euo pipefail
 OUT="${1:?out dir}"; ACCENT="${2:?accent hex}"; FG="${3:-#FFFFFF}"; LETTERS="${4:-A}"
 mkdir -p "$OUT"
 
-# Rounded-square badge with centered letters. SVG is the source of truth.
+# Full-bleed background with the mark inside the maskable safe zone. OSes apply
+# their own rounded/squircle mask; transparent corners break Apple touch icons
+# and are invalid for a maskable manifest icon. SVG is the source of truth.
 cat > "$OUT/icon.svg" <<SVG
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="${ACCENT}"/>
+  <rect width="512" height="512" fill="${ACCENT}"/>
   <text x="50%" y="52%" dy=".35em" text-anchor="middle"
         font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
         font-size="248" font-weight="700" fill="${FG}">${LETTERS}</text>
@@ -36,6 +38,7 @@ render() { # <size> <file>
   fi
 }
 
+render 180 "$OUT/icon-180.png" || true
 render 192 "$OUT/icon-192.png" || true
 render 512 "$OUT/icon-512.png" || true
 echo "Icons written to $OUT (replace with real artwork before shipping)."

@@ -1,0 +1,60 @@
+ion-modal.ui-confirm-modal {
+  --height: auto;
+  --max-height: calc(100vh - var(--safe-top, env(safe-area-inset-top, 0px)) - 16px);
+  --max-height: calc(100dvh - var(--safe-top, env(safe-area-inset-top, 0px)) - 16px);
+  --border-radius: var(--radius-hero, 22px) var(--radius-hero, 22px) 0 0;
+  --background: var(--surface);
+  --box-shadow: var(--shadow-raised);
+}
+
+.ui-confirm {
+  box-sizing: border-box;
+  padding: var(--sp-5) var(--sp-4)
+    calc(var(--sp-4) + var(--safe-bottom, env(safe-area-inset-bottom, 0px)));
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.ui-confirm-title {
+  margin: 0;
+  color: var(--ink);
+  font: 700 1.2rem/1.25
+    var(--heading-font, var(--ion-font-family, system-ui, sans-serif));
+  letter-spacing: -0.01em;
+}
+
+.ui-confirm-message {
+  margin: var(--sp-2) 0 0;
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.ui-confirm-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.ui-confirm-actions ion-button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--tap-min, 44px);
+  margin: 0;
+}
+
+.ui-confirm-actions ion-button::part(native) {
+  min-height: var(--tap-min, 44px);
+  white-space: normal;
+}
+
+.ui-confirm-actions ion-button:focus-visible {
+  outline: 3px solid var(--accent-bg);
+  outline-offset: 2px;
+}
+
+@media (max-width: 359px) {
+  .ui-confirm-actions {
+    flex-direction: column-reverse;
+  }
+}

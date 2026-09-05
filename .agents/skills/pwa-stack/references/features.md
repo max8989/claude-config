@@ -68,15 +68,13 @@ Make the installed iOS PWA feel native.
 Include when on:
 - `setupIonicReact({ swipeBackEnabled: false })` and suppress Ionic's
   back-transition on iOS (the OS edge-swipe already animates it).
-- `viewport-fit=cover`, `user-scalable=no`, `maximum-scale=1`,
-  `touch-action: manipulation`, `-webkit-text-size-adjust: 100%`.
-- Media-scoped `<meta name="theme-color">` tags kept in sync by `lib/theme.ts`.
 - Haptics on interactions.
 - Install instructions in the README (Share → Add to Home Screen, iOS 16.4+ for
   push).
 
-Omit when off: keep default Ionic gestures/zoom; haptics can stay (harmless
-no-op) or go.
+Omit when off: keep default Ionic gestures and retain the no-op-safe haptic
+helper used by shared interactions. Do not remove the baseline mobile and PWA
+requirements below.
 
 ---
 
@@ -85,5 +83,10 @@ no-op) or go.
 Regardless of toggles: the API-fronts-PocketBase model, auth-only client + `api()`
 wrapper, TanStack Query with optimistic mutations + toasts + global loading bar,
 the token theme system with light/dark, the custom SW + prompt-to-update flow,
-the Fastify DI/route structure, the Docker Compose stack, and the one example
-resource wired end to end.
+the mobile product/UI blueprint, a reusable confirmation provider for sign out
+and consequential actions, the Fastify DI/route structure, the Docker Compose
+stack, and the one example resource wired end to end. Also always include the
+zoom-preserving `viewport-fit=cover` viewport, media-scoped theme colors,
+explicit Apple touch icon, safe-area-aware custom chrome, 44×44 CSS px minimum
+targets, keyboard-open checks, and the physical installed-iPhone acceptance
+pass described in `mobile-design.md`.

@@ -15,15 +15,19 @@ releases page.
 | `react` / `react-dom` | ^18.3 | UI |
 | `@ionic/react` + `@ionic/react-router` | ^8 | Mobile-grade component kit + native-feeling routing/transitions. Provides the tab shell, sliding rows, modals, toasts, dark palette. |
 | `ionicons` | ^7 | Icon set that ships with Ionic |
-| `react-router` / `react-router-dom` | ^5.3 | **v5, required by `@ionic/react-router`** — do not upgrade to v6/v7, Ionic's router is built on v5 |
+| `react-router` / `react-router-dom` | compatible with Ionic | Match the router major to the installed `@ionic/react-router` major and verify its current API before generating routes; do not inherit a stale pin. |
 | `vite` + `@vitejs/plugin-react` | ^5 / ^4 | Build tool + dev server |
 | `vite-plugin-pwa` | ^0.20 | Manifest + service-worker wiring. Use `injectManifest` so the SW is our own `src/sw.ts` (needed for Web Push). |
 | `workbox-core` / `workbox-precaching` | ^7 | Precache + `clientsClaim` inside the SW |
 | `@tanstack/react-query` | ^5 | Server-state cache: queries, optimistic mutations, invalidation |
 | `pocketbase` (JS SDK) | ^0.26 | **Auth only** on the client (`authWithPassword`, `authStore`) |
+| `vitest` + `jsdom` + Testing Library | current compatible | Component tests for interaction, routing, confirmation, and state boundaries |
+| `@playwright/test` + `@axe-core/playwright` | current compatible | WebKit mobile viewport, screenshot, overflow, and accessibility regression checks |
 
-Fonts: loaded from Google Fonts in `index.html` (baseline used *Bricolage
-Grotesque* for headings + *Figtree* for body). Swap or drop for system fonts.
+Fonts: default to the platform system stack for native rendering and reliable
+offline launch. If the user chooses branded fonts, prefer bundled/self-hosted
+files. Use external font hosts only when explicitly requested, with robust
+fallbacks and an offline/cold-start check.
 
 ## API
 

@@ -457,10 +457,52 @@ const animated = !(isPlatform("ios") && routeInfo?.routeDirection === "back")
 <IonRouterOutlet animated={animated}>
 ```
 
-Both halves are pure configuration — do **not** add popstate/history
-interception or any custom back-navigation guard on top (a guard was tried and
-removed; it caused regressions). Works identically on the react-router v5 and
-v6 integrations.
+Both halves are pure configuration and work identically on the react-router
+v5 and v6 integrations.
+
+Third half: **block back navigation on tab roots**. Ionic tab clicks push real
+history entries (`handleChangeTab` → react-router `navigate()` with no
+options), so with the OS gesture owning back, an edge-swipe on a root tab pops
+to whatever tab was visited before — reads as a bug. Copy
+`templates/frontend/src/lib/rootTabBackGuard.ts` verbatim, set `TAB_ROOTS` to
+every `IonTabButton` href plus `"/"` (the one prohibited list — `isTabRoot` is
+exported so nothing else ever keeps a second copy), and call
+`installRootTabBackGuard()` in `main.tsx` **before** `createRoot` — its
+popstate canceller must register ahead of react-router's listener for
+`stopImmediatePropagation()` to win.
+
+A first-generation guard was removed from this skill for causing regressions:
+it `preventDefault()`ed `touchstart` at **both** screen edges with no target
+exemption, which killed taps on edge-adjacent controls (`preventDefault` on
+`touchstart` suppresses the synthesized click) and broke end-side
+swipe-to-reveal rows (§16), which start near the right edge. The current
+template avoids both failure modes by design — keep these properties if you
+ever touch it:
+
+- Layer (a): `preventDefault()` on **left-edge** `touchstart` only (the iOS
+  back-gesture edge; the right edge is forward), and only when the touch does
+  not start on an interactive element. This is the only way to stop the OS
+  gesture and its animation in a standalone PWA (ionic-framework#22299).
+- Layer (b): a popstate canceller as the universal backstop (Safari tab,
+  desktop trackpad, Android back, and the touches layer (a) exempted). It
+  computes direction from react-router's `history.state.idx` delta and, on a
+  back-nav leaving a root, `stopImmediatePropagation()`s and jumps forward
+  again. Entries without an `idx` (outside the app) pass through — a plain
+  browser tab is never back-trapped.
+
+Pushed detail pages keep normal back behavior automatically — the guard only
+blocks when the entry being *left* is a root. Dynamic roots: a tab-like button
+that navigates manually instead of via `IonTabButton` `href` (e.g. a
+"Now Playing" tab that jumps to the current episode) must navigate with
+`navigate(path, { replace: true, state: { rootEntry: true } })` — `replace` so
+the page it was tapped from never sits behind it in history, and the
+`rootEntry` marker makes the guard treat that entry as a root, while the same
+page reached by a normal drill-down keeps its back behavior.
+
+Verify on a real device: DevTools touch emulation simulates touch *events* for
+the page's own JS, but the OS edge-swipe is recognized at the
+OS/browser-chrome level, below what emulation reaches — desktop testing proves
+nothing about layer (a).
 
 ---
 

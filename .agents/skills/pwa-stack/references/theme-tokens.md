@@ -7,6 +7,13 @@ Ionic's `@ionic/react/css/palettes/dark.class.css` (imported first in
 `main.tsx` so our overrides win by source order). Generate this file from the
 skill's colour/dark-mode/font answers.
 
+## Contents
+
+1. Token roles
+2. Ionic bridge
+3. Component classes and safe areas
+4. Palette derivation
+
 ## Token roles
 
 Ask for a small set, derive the rest.
@@ -25,6 +32,12 @@ Ask for a small set, derive the rest.
 | `--skeleton-a` / `--skeleton-b` | shimmer stops | two close bg-adjacent tones |
 | `--shadow` / `--shadow-raised` | elevation | soft ink-tinted (light) / deep black (dark) |
 | `--sp-1..6` | 4/8/12/16/24/32 spacing scale | fixed |
+| `--radius-sm` / `--radius-md` / `--radius-hero` | chips, grouped rows, hero surfaces | ~12/16/22px |
+| `--tap-min` | minimum interactive target in either axis | `44px` |
+| `--tab-height` / `--activity-dock-height` | custom bottom chrome geometry | fixed and safe-area-independent |
+| `--glass-bg` / `--glass-border` | selective navigation/control glass | translucent surface / subtle hairline |
+| `--safe-top/right/bottom/left` | overridable safe-area proxies for custom chrome | `env(safe-area-inset-*, 0px)` |
+| `--heading-font` | editorial/page-heading family | chosen font or platform system stack |
 | `--dur-fast`/`--dur-med`, `--ease`, `--ease-pop` | motion | fixed |
 | `--content-max` | max content width on wide screens | ~680px |
 
@@ -68,6 +81,60 @@ Snippets and generated pages use a neutral `ui-` class prefix (`ui-row`,
 `variables.css`, all reading from the tokens so they follow light/dark for free.
 Rename the prefix per project if you like, but keep it consistent.
 
+Do not turn `ui-card` into the default wrapper for every block. Generate
+separate roles for a dominant hero, grouped rows, compact actions, empty/error
+states, the transient activity dock, and navigation. Use spacing and type to
+separate low-level content; reserve borders and shadows for actual containment.
+
+Custom bottom chrome must compose its fixed geometry with the safe area rather
+than baking an iPhone inset into a token:
+
+```css
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+.ui-tab-shell {
+  box-sizing: border-box;
+  min-height: calc(var(--tab-height) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+}
+
+.ui-icon-button,
+.ui-chip,
+.ui-primary-action {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+}
+```
+
+Apply these proxies only to custom chrome. Do not add them to an Ionic header,
+tab bar, content, or sheet that already consumes Ionic's safe-area variables;
+doing both doubles the inset. Override the proxy tokens with representative
+nonzero values in desktop browser tests because Playwright WebKit does not
+emulate an iPhone notch or home indicator.
+
+Use glass only on navigation or compact controls. Start with an opaque surface,
+then enhance where supported:
+
+```css
+.ui-glass { background: var(--surface); border: 1px solid var(--hairline); }
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .ui-glass {
+    background: var(--glass-bg);
+    border-color: var(--glass-border);
+    -webkit-backdrop-filter: saturate(140%) blur(18px);
+    backdrop-filter: saturate(140%) blur(18px);
+  }
+}
+```
+
+Do not apply a second blur to an Ionic toolbar when `IonHeader` is already
+translucent. Long reading surfaces, forms, and lists stay opaque.
+
 ## Deriving the palette from answers
 
 The skill asks for: **accent** (brand color), **surface tone** (warm / cool /
@@ -83,7 +150,9 @@ neutral and how light), **dark mode** (both / light-only / dark-only), and
    surfaces in the same hue family, a slightly brighter accent (dark backgrounds
    mute saturation), and black-based shadows. If light-only, omit the dark block
    **and** don't import Ionic's dark palette; if dark-only, invert.
-5. Set `--bg` light/dark into three places that must agree:
+5. Derive glass colors from `--surface`, then verify that opaque fallbacks and
+   text contrast remain correct without `backdrop-filter`.
+6. Set `--bg` light/dark into three places that must agree:
    `theme/variables.css`, the `<meta name="theme-color">` tags in `index.html`,
    and `THEME_COLOR` in `lib/theme.ts`. Set the manifest `theme_color`
    (usually the accent) and `background_color` (the light `--bg`) in
@@ -91,4 +160,6 @@ neutral and how light), **dark mode** (both / light-only / dark-only), and
 
 Sanity-check contrast (ink on bg, accent-contrast on accent) at ~AA before
 finishing. Keep the light and dark palettes the same hue family so the app reads
-as one brand across modes.
+as one brand across modes. Add a `prefers-reduced-motion: reduce` block that
+removes decorative animation and replaces spring/pop transitions with near-zero
+durations while preserving state changes.

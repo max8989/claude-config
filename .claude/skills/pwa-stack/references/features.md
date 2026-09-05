@@ -99,6 +99,6 @@ no-op) or go.
 Regardless of toggles: the API-fronts-PocketBase model, auth-only client + `api()`
 wrapper, TanStack Query with optimistic mutations + toasts + global loading bar,
 the token theme system with light/dark, the custom SW + auto-update flow, the
-in-app install button on the settings page,
-the Fastify DI/route structure, the Docker Compose stack, and the one example
-resource wired end to end.
+in-app install button on the settings page, the root-tab back guard
+(`patterns.md` §15), the Fastify DI/route structure, the Docker Compose stack,
+and the one example resource wired end to end.

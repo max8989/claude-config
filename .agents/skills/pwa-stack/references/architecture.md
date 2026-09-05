@@ -15,9 +15,11 @@ Push refuse to run on insecure origins.
   frontend/                # React + Vite + Ionic React PWA
     index.html
     vite.config.ts         # vite-plugin-pwa, manifest, manualChunks, dev proxy
+    vitest.config.ts       # jsdom component tests
+    playwright.config.ts   # WebKit mobile + accessibility/visual checks
     tsconfig.json
     Dockerfile
-    public/                # icon-192.png, icon-512.png, icon.svg
+    public/                # icon-180.png, icon-192.png, icon-512.png, icon.svg
     src/
       main.tsx             # mounts <App>, imports Ionic CSS + dark palette + theme/variables.css, initTheme()
       App.tsx              # IonApp, QueryClientProvider, AuthProvider, tabs, SSE stream, auth gate
@@ -26,7 +28,8 @@ Push refuse to run on insecure origins.
       lib/                 # pb, api, queryClient, queries, mutations, theme, haptics, toast, push, types
       auth/AuthContext.tsx # authStore-backed React context
       components/          # GlobalLoadingBar, ReloadPrompt, Skeletons, ...
-      pages/              # one IonPage per route
+      pages/               # one IonPage per route; tests colocated by feature
+    e2e/                   # mobile shell, safe-area, keyboard, and a11y checks
   api/                     # Fastify (TypeScript, run with tsx — no build step)
     tsconfig.json
     Dockerfile

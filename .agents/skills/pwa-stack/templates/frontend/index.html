@@ -2,16 +2,16 @@
 <html lang="__APP_LANG__">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <!-- [FEATURE: ios] iOS standalone reads these media-scoped metas natively;
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Browser and standalone chrome read these media-scoped metas natively;
          lib/theme.ts keeps them in sync when the user forces a theme. Colors
          must match --bg in theme/variables.css. -->
     <meta name="theme-color" content="__BG_LIGHT__" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="__BG_DARK__" media="(prefers-color-scheme: dark)" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- __FONT_LINK__ (swap or delete if using system fonts) -->
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+    <meta name="apple-mobile-web-app-title" content="__APP_SHORT_NAME__" />
+    <!-- Optional self-hosted preload/external font tags. -->
+    __FONT_HEAD__
     <title>__APP_NAME__</title>
   </head>
   <body>

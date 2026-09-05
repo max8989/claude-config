@@ -39,7 +39,8 @@ conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
 - `references/features.md` — what each optional feature adds/removes.
 - `templates/` — the **stable** boilerplate worth copying verbatim (compose,
   Dockerfiles, vite PWA config, index.html, tsconfigs, init migration,
-  `frontend/src/lib/install.ts`, `frontend/src/components/ConfirmModal.tsx`,
+  `frontend/src/lib/install.ts`, `frontend/src/lib/rootTabBackGuard.ts`,
+  `frontend/src/components/ConfirmModal.tsx`,
   `frontend/src/components/PageRefresher.tsx`,
   `frontend/src/components/SlidingActions.tsx`). These carry `__PLACEHOLDER__`
   tokens and `[FEATURE: x]` markers.
@@ -220,6 +221,23 @@ Copy `templates/frontend/src/components/PageRefresher.tsx` verbatim and render
 it as the first child of `IonContent` on every tab-root/list page, passing that
 page's query-key families (e.g.
 `<PageRefresher queryKeys={[keys.items]} />`). Details: `patterns.md` §14.
+
+#### No back navigation on tab roots (required)
+
+Going "back" from a root tab (Home, Library, …) pops to whatever tab was
+visited before and reads as a bug. Copy
+`templates/frontend/src/lib/rootTabBackGuard.ts` verbatim, set `TAB_ROOTS` to
+**every `IonTabButton` href plus `"/"`** — no tab root may be omitted, and
+nothing else keeps a second copy of the list (import `isTabRoot` where
+needed). Call `installRootTabBackGuard()` in `main.tsx` before `createRoot` —
+it must beat the router's popstate listener. Pushed detail pages keep normal
+back behavior automatically. A tab-like button that navigates manually (not
+via `IonTabButton` `href`) marks its destination a root with
+`navigate(path, { replace: true, state: { rootEntry: true } })`. Mechanism,
+the regressions the current design avoids (do not reintroduce the old
+both-edges `touchstart` variant), and the dynamic-root pattern: `patterns.md`
+§15. Verify on a real device — DevTools touch emulation cannot reproduce the
+OS edge-swipe gesture.
 
 ### 6. Icons
 
