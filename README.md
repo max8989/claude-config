@@ -12,7 +12,7 @@ source; the agent-standard files reference them.
   settings.json       # theme, default permission mode, enabled plugins
   settings.local.json # per-host overrides (which .mcp.json servers to enable)
 .agents/AGENTS.md      # ~/.agents entry point referencing .claude/CLAUDE.md
-.agents/skills/       # Agent Skills wrappers referencing .claude/skills
+.agents/skills/       # reusable skills and wrappers referencing .claude/skills
 AGENTS.md             # agent-standard instructions referencing .claude/CLAUDE.md
 .mcp.json             # project-level MCP server definitions
 bin/                  # downloaded MCP server binaries (gitignored)
@@ -134,6 +134,17 @@ Inside Claude Code:
 ```
 
 All servers should report `connected`; `ctx doctor` should be green across the board.
+
+## Reusable application skills
+
+- [`pwa-stack`](.agents/skills/pwa-stack/SKILL.md) creates the PWA application
+  architecture and a health-checked `deploy.sh` workflow with isolated production
+  and development Compose stacks. It offers optional Grafana telemetry through
+  the independent observability skill.
+- [`observability`](.agents/skills/observability/SKILL.md) instruments new or
+  existing projects, including non-PWA applications. It discovers and reuses
+  centralized Grafana, Prometheus, Loki, Tempo, and compatible collectors;
+  creation of missing central infrastructure requires explicit confirmation.
 
 ## Maintenance
 

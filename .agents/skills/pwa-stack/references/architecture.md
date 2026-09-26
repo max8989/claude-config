@@ -12,6 +12,7 @@ Push refuse to run on insecure origins.
 <app>/
   docker-compose.yml       # pocketbase (private) + api (exposed) + frontend-build (one-shot)
   .env.example             # admin creds, VAPID keys, ports, TZ
+  deploy.sh                # main/.env or dev/.env.dev; health-checked deployment
   frontend/                # React + Vite + Ionic React PWA
     index.html
     vite.config.ts         # vite-plugin-pwa, manifest, manualChunks, dev proxy
@@ -48,6 +49,7 @@ Push refuse to run on insecure origins.
     Dockerfile             # downloads a pinned PocketBase release
     pb_migrations/         # JS migrations (schema as code)
     pb_data/               # runtime data (gitignored)
+    pb_data_dev/           # separate deployed-dev data (gitignored)
 ```
 
 ## The one rule that shapes everything: the API fronts PocketBase
@@ -87,13 +89,18 @@ generically.
 
 ## Dev vs. production
 
-- **Dev:** run PocketBase (compose) + `npm run dev` in `frontend/` (Vite on
+- **Local development:** run PocketBase (compose) + `npm run dev` in `frontend/` (Vite on
   5173, proxies `/api` → `:3000`) + `npm run dev` in `api/` (tsx watch on 3000).
   Web Push won't work on `http://localhost` in iOS Safari; test the subscribe
   flow on desktop Chrome and end-to-end push on an installed HTTPS build.
-- **Prod:** `docker compose up -d --build`. `frontend-build` compiles the SPA
-  into a volume; `api` serves it. Create the PocketBase superuser on first run
-  (`pocketbase superuser upsert`), then add users in the admin UI.
+- **Server production:** `./deploy.sh` (or `./deploy.sh prod`) from `main`
+  with `.env`. The frontend copier exits successfully before API startup;
+  deployment upserts the superuser and verifies PocketBase/API health.
+- **Server development:** `./deploy.sh dev` from a separate `dev` checkout,
+  with `.env.dev`, distinct host ports, a slug-derived `-dev` Compose project,
+  and `pb_data_dev`. This runs the built app, separately from local hot reload.
+
+See `deployment.md` for first-time setup and the script/Compose contract.
 
 See `patterns.md` for the conventions and `features.md` for what each optional
 feature adds.

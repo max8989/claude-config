@@ -11,8 +11,9 @@ description: >-
   iPhone-first UI blueprint with stable thumb navigation, visible creation,
   confirmations, accessible safe areas, UI/content-language separation, and
   mobile visual QA. Ask about product hierarchy, brand, fonts, languages, and
-  optional features before generating. Not for a feature added to an existing
-  app of another stack or for a pure static site.
+  optional features before generating. Includes isolated prod/dev deployment
+  and optional telemetry via the independent observability skill. Not for a
+  feature added to an existing app of another stack or for a pure static site.
 ---
 
 # pwa-stack
@@ -39,6 +40,8 @@ conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
   architecture, creation, navigation, materials, localization, accessibility,
   and visual verification rules.
 - `references/features.md` — what each optional feature adds/removes.
+- `references/deployment.md` — server setup, isolated prod/dev deployments,
+  configuration checks, health verification, and failure handling.
 - `templates/` — the **stable** boilerplate worth copying verbatim (compose,
   Dockerfiles, vite PWA config, index.html, tsconfigs, init migration, and the
   app-wide confirmation provider). These carry `__PLACEHOLDER__` tokens and
@@ -79,6 +82,12 @@ answers the user already supplied:
 4. **Features** (multi-select) — `Web Push notifications` / `Realtime (SSE)` /
    `Roles + admin screen` / `iOS install tuning (recommended for mobile-first
    PWAs)`. See `references/features.md`.
+5. **Observability / telemetry** — `None` / `Grafana observability`.
+   Reuse an already stated preference. When enabled, follow
+   [the independent observability skill](../observability/SKILL.md) after the
+   app architecture is clear; it owns discovery, instrumentation, reuse of
+   central services, and verification. Do not duplicate its setup here or
+   install infrastructure just because telemetry was selected.
 
 Infer three to five root destinations from the product. Ask about navigation
 only when more than one sensible hierarchy remains. Do not ask whether to make
@@ -100,8 +109,11 @@ Create the repo layout from `architecture.md`. Copy the files under
 `templates/` into place (mirrored paths: `templates/frontend/*` →
 `<app>/frontend/`, `templates/api/Dockerfile` → `<app>/api/`,
 `templates/pocketbase/*` → `<app>/pocketbase/`, `templates/docker-compose.yml`
-and `templates/.env.example` → repo root). Then substitute the placeholders in
-every copied file:
+and `templates/.env.example` → repo root). Also copy `templates/deploy.sh` to
+the root and make it executable. Read `references/deployment.md` and preserve
+the agreement between the script, Compose services, env selection, data mounts,
+frontend build completion, and actual API health route. Then substitute the
+placeholders in every copied file:
 
 | Placeholder | Value |
 |---|---|
@@ -118,7 +130,8 @@ Also write `package.json` for `frontend/` and `api/` (not templated — generate
 with the confirmed versions and the scripts from `stack.md`: frontend
 `dev/build/preview/typecheck/test/test:e2e`, api `dev` = `tsx watch
 src/index.ts`, `start` = `tsx src/index.ts`, `typecheck`, `test`), plus
-`.gitignore` files (ignore `node_modules`, `dist`, `pb_data`, `.env`). Configure
+`.gitignore` files (ignore `node_modules`, `dist`, `pb_data`, `pb_data_dev`,
+`.env`, `.env.*`, with `!.env.example`). Configure
 Vitest + Testing Library for component tests and Playwright + axe for the mobile
 browser matrix; keep browser binaries and reports out of git.
 
@@ -193,7 +206,13 @@ warns — tell the user to supply the PNGs (or real artwork) before shipping.
 Treat these as neutral placeholders; do not default the app mark or Create
 controls to sparkle/star imagery.
 
-### 8. Verify and hand off
+### 8. Optional observability
+
+If Grafana observability was selected, follow `../observability/SKILL.md` now
+using the generated architecture and existing answers. Keep telemetry optional
+and the application usable when it is disabled or the receiver is unavailable.
+
+### 9. Verify and hand off
 
 - Run typecheck, unit/component tests, and production builds in `frontend/` and
   `api/` if dependencies are installed; otherwise note that `npm install` is
@@ -207,14 +226,16 @@ controls to sparkle/star imagery.
 - State explicitly that Playwright/WebKit is only an approximation. Include a
   physical installed-iPhone acceptance pass for standalone safe areas, status
   bar, keyboard, edge swipe, VoiceOver, offline launch, and the update flow.
-- Print next steps: `cp .env.example .env` and fill it (generate VAPID keys with
-  `npx web-push generate-vapid-keys` if push is on); `docker compose up -d
-  --build`; create the PocketBase superuser
-  (`docker compose exec pocketbase /pb/pocketbase superuser upsert <email>
-  <password>`); open the PocketBase admin, add users with `active = true`; open
-  the app on the API port. Remind them HTTPS (via their own reverse proxy) is
-  required for service workers and Web Push in production, and that this stack
-  intentionally does not include TLS/proxy.
+- Verify `bash -n deploy.sh` and resolve both Compose targets without printing
+  secrets, following `references/deployment.md`. Check executable mode, branch
+  guards, distinct projects/data/ports, and failure exits before handoff.
+- Write first-time server setup and prod/dev instructions in the generated
+  README using `references/deployment.md`. Deployment creates/upserts the
+  superuser; explain adding app users with `active = true` afterwards. Generate
+  VAPID keys only when push is selected. Inspect/confirm the intended server,
+  environment and existing proxy before any live deployment; generating these
+  files is not a request to deploy them. HTTPS and reverse proxy/TLS remain
+  the host's responsibility; do not assume a particular implementation.
 
 ## Notes
 

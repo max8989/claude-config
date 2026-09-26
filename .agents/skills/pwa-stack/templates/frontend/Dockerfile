@@ -10,4 +10,4 @@ RUN npm run build
 # Final stage just holds the artifacts for extraction into the shared volume.
 FROM alpine:3.20
 COPY --from=build /app/dist /dist
-CMD ["sh", "-c", "cp -r /dist/. /out/ && echo 'frontend build copied' && sleep infinity"]
+CMD ["sh", "-c", "cp -r /dist/. /out/ && echo 'frontend build copied'"]

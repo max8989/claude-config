@@ -3,6 +3,8 @@
 # here — front this with whatever the host already runs (nginx proxy manager,
 # Traefik, a platform ingress). HTTPS is required in production for service
 # workers and Web Push.
+name: ${COMPOSE_PROJECT_NAME:-__APP_SLUG__}
+
 services:
   # Private: only the api service reaches PocketBase over the compose network.
   pocketbase:
@@ -16,7 +18,7 @@ services:
       # HTTPS. Never point the public app at this port.
       - "${PB_ADMIN_BIND:-127.0.0.1}:${PB_ADMIN_PORT:-8093}:8090"
     volumes:
-      - ./pocketbase/pb_data:/pb/pb_data
+      - ${PB_DATA_DIR:-./pocketbase/pb_data}:/pb/pb_data
       - ./pocketbase/pb_migrations:/pb/pb_migrations
 
   # The only exposed service: REST API + SSE + serves the built SPA.
@@ -24,13 +26,17 @@ services:
     build: ./api
     restart: unless-stopped
     depends_on:
-      - pocketbase
+      pocketbase:
+        condition: service_started
+      frontend-build:
+        condition: service_completed_successfully
     # env_file (not ${...} interpolation): empty same-name shell variables
     # would otherwise shadow the .env values and crash the api at boot.
-    env_file: .env
+    env_file: ${ENV_FILE:-.env}
     environment:
       PB_URL: http://pocketbase:8090
       TZ: ${TZ}
+      APP_ENV: ${APP_ENV:-production}
     ports:
       - "${APP_PORT:-8090}:3000"
     volumes:
