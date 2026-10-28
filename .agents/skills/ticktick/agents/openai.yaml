@@ -1,0 +1,4 @@
+interface:
+  display_name: "TickTick"
+  short_description: "View, add, update, and complete TickTick reminders"
+  default_prompt: "Use $ticktick to show my reminders for today."

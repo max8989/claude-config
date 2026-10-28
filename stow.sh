@@ -44,6 +44,9 @@ backup_conflicts() {
     [[ "$rel" =~ $IGNORE_REGEX ]] && continue
     target="$TARGET/$rel"
     [[ -e "$target" && ! -L "$target" && ! -d "$target" ]] || continue
+    # A parent directory may already be a stowed symlink. In that case the
+    # target is this source file, so moving it would move the repo's own file.
+    [[ "$src" -ef "$target" ]] && continue
     mv "$target" "$target.pre-stow-$stamp"
     echo "  moved existing $target -> $target.pre-stow-$stamp"
   done < <(find "$REPO_DIR" -type f -not -path "$REPO_DIR/.git/*")

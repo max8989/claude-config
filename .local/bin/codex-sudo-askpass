@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# sudo captures the helper's stdout directly; keep it limited to the password.
+exec yad --entry --hide-text \
+  --title="sudo authentication" \
+  --text="${1:-Password:}" \
+  --button="Cancel:1" --button="OK:0"

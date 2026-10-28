@@ -11,6 +11,10 @@ source; the agent-standard files reference them.
   CLAUDE.md           # global instructions (loaded for every session)
   settings.json       # theme, default permission mode, enabled plugins
   settings.local.json # per-host overrides (which .mcp.json servers to enable)
+.codex/
+  AGENTS.md           # Codex global entry point referencing .claude/CLAUDE.md
+  config.toml         # Codex defaults and existing preferences
+.local/bin/codex-sudo-askpass # desktop password dialog used by sudo -A
 .agents/AGENTS.md      # ~/.agents entry point referencing .claude/CLAUDE.md
 .agents/skills/       # reusable skills and wrappers referencing .claude/skills
 AGENTS.md             # agent-standard instructions referencing .claude/CLAUDE.md
@@ -135,6 +139,24 @@ Inside Claude Code:
 
 All servers should report `connected`; `ctx doctor` should be green across the board.
 
+## Codex defaults
+
+Stow installs `~/.codex/config.toml` and `~/.codex/AGENTS.md`. New Codex sessions
+start with Vim mode enabled and full filesystem/network access without command
+approval prompts. Existing model, reasoning, project-trust, and status-line
+preferences are preserved in the configuration. The global `AGENTS.md` loads
+the canonical Claude instructions, including the sudo authentication rule.
+
+Commands requiring sudo use `sudo -A` with the executable
+`~/.local/bin/codex-sudo-askpass` helper. It opens a hidden-entry password dialog
+using YAD; YAD must be installed and a graphical desktop session must be
+available. The password goes directly to sudo. Normal sudo credential caching
+still applies.
+
+Before stowing an existing installation, merge any host-specific Codex settings
+you want to keep into `.codex/config.toml`. `stow.sh` backs up conflicting files
+before linking the repository's versions. Restart Codex to load the new defaults.
+
 ## Reusable application skills
 
 - [`pwa-stack`](.agents/skills/pwa-stack/SKILL.md) creates the PWA application
@@ -145,6 +167,10 @@ All servers should report `connected`; `ctx doctor` should be green across the b
   existing projects, including non-PWA applications. It discovers and reuses
   centralized Grafana, Prometheus, Loki, Tempo, and compatible collectors;
   creation of missing central infrastructure requires explicit confirmation.
+- [`ticktick`](.agents/skills/ticktick/SKILL.md) manages tasks and reminders through
+  the connected TickTick app plugin. Invoke `$ticktick` to view, add, update,
+  reschedule, complete, or delete reminders. Stow exposes it globally at
+  `~/.agents/skills/ticktick/`.
 
 ## Maintenance
 

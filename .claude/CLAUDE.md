@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+## Sudo authentication
+
+When an authorized command requires sudo, use `sudo -A` so the configured
+askpass helper opens a desktop password dialog. The user enters their password
+directly in that dialog. Never request passwords in chat, put them in tool
+arguments, or store or log them. Normal sudo credential caching still applies.
+
 ## Hard rules — check BEFORE answering
 
 **Before stating any third-party SDK / API / CLI / library / cloud-service specifics** (method names, field names, webhook events, default behaviors, pricing tiers, regional coverage, version differences, config flags), call Context7 first — `resolve-library-id` then `query-docs`. Applies to **every** vendor regardless of how well-known: Plaid, Stripe, Supabase, AWS, GCP, Vercel, Next.js, React, Prisma, Django, Neovim, Hyprland, Waybar, etc. Do **not** rely on training data alone, even for libraries you "know." If Context7 has no coverage, say so explicitly and fall back to WebFetch on the vendor's official docs — never silently guess.
@@ -31,7 +38,7 @@ If `context-mode:context-mode` is not in the available-skills list, the project 
 
 ## Internet research — use the agent-reach skill
 
-**Before any internet research or platform lookup**, invoke the `agent-reach` skill first. Triggers: "research X", "search the web for X", "look this up", "see what people say about X", or any mention of / URL from Twitter/X, Reddit, Facebook, Instagram, YouTube, GitHub, Bilibili, XiaoHongShu, Xiaoyuzhou Podcast, LinkedIn, V2EX, Xueqiu, or RSS feeds. Run `agent-reach doctor --json` to see which backend serves each platform.
+**Before any internet research or platform lookup**, invoke the `agent-reach` skill first. Triggers: "research X", "search the web for X", "look this up", "see what people say about X", or any mention of / URL from Twitter/X, Reddit, Facebook, Instagram, YouTube, GitHub, Bilibili, XiaoHongShu, Xiaoyuzhou Podcast, LinkedIn, V2EX, Xueqiu, or RSS feeds. Run `agent-reach doctor` to check installed channels and tools; it prints JSON by default.
 
 **Not** for writing reports/analysis/translation (it only fetches content), write operations (posting/commenting/liking), or platforms covered by a dedicated skill (prefer that skill). If `agent-reach` is not in the available-skills list, it isn't installed on that machine — fall back to normal web tools (still routed through context-mode per the rules above).
 
