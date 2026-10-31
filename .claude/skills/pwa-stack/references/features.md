@@ -79,8 +79,9 @@ admin page/tab, and the `"admin" | "member"` union in `types.ts`.
 Make the installed iOS PWA feel native.
 
 Include when on:
-- `viewport-fit=cover`, `user-scalable=no`, `maximum-scale=1`,
-  `touch-action: manipulation`, `-webkit-text-size-adjust: 100%`.
+- Safe-area-aware standalone layout with `viewport-fit=cover`,
+  `touch-action: manipulation`, and `-webkit-text-size-adjust: 100%`.
+  Keep pinch zoom enabled; do not add `user-scalable=no` or `maximum-scale=1`.
 - Media-scoped `<meta name="theme-color">` tags kept in sync by `lib/theme.ts`.
 - Haptics on interactions.
 - Install instructions in the README (Share → Add to Home Screen, iOS 16.4+ for
@@ -89,8 +90,9 @@ Include when on:
   Share → Add to Home Screen steps; with `ios` on, make that branch the one you
   verify on a real device, since iOS never fires `beforeinstallprompt`.
 
-Omit when off: keep default Ionic gestures/zoom; haptics can stay (harmless
-no-op) or go.
+Omit when off: keep the baseline safe areas, zoom, and shared UI structure;
+haptics can stay (harmless no-op) or go. Apply extra iOS behavior only when
+selected.
 
 ---
 

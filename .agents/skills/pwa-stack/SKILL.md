@@ -8,9 +8,9 @@ description: >-
   database, or auth, even if they do not name the stack. Triggers include "new
   PWA", "scaffold an app", "create a mobile web app", "PocketBase/Ionic app",
   and "frontend + backend + db". Includes CSS-token light/dark theming and an
-  iPhone-first UI blueprint with stable thumb navigation, visible creation,
-  confirmations, accessible safe areas, UI/content-language separation, and
-  mobile visual QA. Ask about product hierarchy, brand, fonts, languages, and
+  shared Chinese-learning PWA UI structure with stable bottom navigation,
+  guided creation, reusable components, confirmations, and mobile visual QA.
+  Persist the UI rules for future changes. Ask about hierarchy, brand, fonts, languages, and
   optional features before generating. Includes isolated prod/dev deployment
   and optional telemetry via the independent observability skill. Not for a
   feature added to an existing app of another stack or for a pure static site.
@@ -25,6 +25,19 @@ stack. This skill captures the **structure and patterns**, not a frozen copy of
 the source — you generate current-API code that follows the documented
 conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
 
+## UI rules for every project
+
+Before proposing, implementing, changing, reviewing, or verifying UI, check the
+available skills and read `ui-ux-pro-max`, including for small visual fixes.
+Follow its wrapper to the canonical instructions and use web/React guidance.
+Apply its recommendations within the shared PWA structure below.
+
+Use the Chinese-learning **web/PWA** structure for new projects: stable bottom
+destinations, central Add/Create, compact daily Home, grouped collections,
+content-first activity, grouped Profile settings, and a dock for transient
+work. Adapt labels and branding to the product. The shared UI references and
+generated project instructions keep later additions consistent with that system.
+
 ## What this skill contains
 
 - `references/architecture.md` — repo layout, the "API fronts PocketBase" model,
@@ -36,9 +49,8 @@ conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
   tokens, custom SW update flow, API DI/route shape, native touches).
 - `references/theme-tokens.md` — the CSS-token system and how to derive a
   light/dark palette from the user's answers.
-- `references/mobile-design.md` — required iPhone-first information
-  architecture, creation, navigation, materials, localization, accessibility,
-  and visual verification rules.
+- `references/mobile-design.md` — entry point to the shared Chinese PWA
+  structure, project UI contract, instruction templates, and verification rules.
 - `references/features.md` — what each optional feature adds/removes.
 - `references/deployment.md` — server setup, isolated prod/dev deployments,
   configuration checks, health verification, and failure handling.
@@ -126,6 +138,11 @@ placeholders in every copied file:
 | `__BG_LIGHT__` / `__BG_DARK__` | light/dark `--bg` (from the palette you derive) |
 | `__FONT_HEAD__` | optional self-hosted preload or external font tags; delete for system fonts |
 
+Copy the root project instruction templates linked from
+`references/mobile-design.md` and generate the project's `UI_GUIDE.md` as
+specified there. Follow wrappers to their canonical file before resolving the
+template paths. Preserve existing project instructions when present.
+
 Also write `package.json` for `frontend/` and `api/` (not templated — generate
 with the confirmed versions and the scripts from `stack.md`: frontend
 `dev/build/preview/typecheck/test/test:e2e`, api `dev` = `tsx watch
@@ -149,17 +166,16 @@ include robust fallbacks and verify an offline launch.
 
 ### 5. Design the interaction map
 
-Before writing components, create the compact internal UI map required by
-`references/mobile-design.md`: page hierarchy, three-to-five stable root
-destinations, primary action, returning/resume state, transient activity
-surface, creation flow, and loading/empty/error/offline states.
+Before writing components, record the UI map in the generated `UI_GUIDE.md`
+using `references/mobile-design.md`: page hierarchy, stable root destinations,
+primary action, returning/resume state, transient activity, creation flow,
+theme/components, and loading/empty/error/offline states.
 
-Use the document's default shell when creation is central: Home, the main
-collection, a centered text-labeled Create destination, the main
-activity/review destination, and Profile. Keep the destinations stable;
-represent a player, upload, timer, or other transient state with a mini-panel
-above the tab bar rather than adding a tab. Adapt names and omit irrelevant
-destinations instead of forcing this exact vocabulary onto every domain.
+Start with the shared shell's Home, collection, central labeled Add/Create,
+main activity, and Profile roles. Adapt names and omit irrelevant destinations
+without inventing features. Record the chosen routes and order, then keep them
+stable when transient work starts. Use the shared page hierarchy for every
+generated page and update the guide when product decisions change.
 
 ### 6. Generate the application code following the patterns
 
@@ -184,6 +200,10 @@ Make the interaction blueprint concrete in the generated example:
   generic creation.
 - Render newest user-created items first and provide explicit loading, error +
   retry, empty, and populated states.
+- Reuse the shared header, fields, buttons, rows, state displays, and dock
+  rather than styling each page independently. Add pull-to-refresh on
+  data-bearing root/list pages, accessible owner edit/delete actions, and the
+  Profile install entry. Follow the shared root/detail Back behavior.
 - Copy `templates/frontend/src/components/ConfirmModal.tsx` and its adjacent
   CSS verbatim, mount `ConfirmProvider` once inside `IonApp`, and await it
   before delete, remove, draft abandonment, or sign out. Cancellation must
@@ -223,6 +243,10 @@ and the application usable when it is disabled or the receiver is unavailable.
   flow, dialog focus, and accessible names. Use deterministic visual fallbacks
   for screenshots. Override the app's safe-area proxy tokens with nonzero test
   insets because desktop WebKit does not emulate an iPhone notch.
+- Check the generated Home, collection, Add, activity/detail, and Profile
+  against `UI_GUIDE.md`, and record UI verification evidence and remaining
+  device checks there. Verify that both root instruction files link to that
+  guide so future UI changes use the same rules.
 - State explicitly that Playwright/WebKit is only an approximation. Include a
   physical installed-iPhone acceptance pass for standalone safe areas, status
   bar, keyboard, edge swipe, VoiceOver, offline launch, and the update flow.

@@ -10,8 +10,10 @@ description: >-
   backend/database/auth — even if they don't name the stack. Triggers:
   "new PWA", "scaffold an app", "create a mobile web app", "start a project
   with PocketBase/Ionic", "installable app with notifications", "spin up a
-  frontend + backend + db". The skill asks about colors, dark mode, fonts, and
-  which features (push, realtime, roles, iOS) before generating. NOT for adding
+  frontend + backend + db". Uses the shared Chinese-learning PWA UI structure,
+  reusable light/dark components, guided creation, and mobile visual QA, with
+  project instructions for future UI changes. Asks about colors, fonts, and
+  features before generating. NOT for adding
   a feature to an existing app of a different stack, or for pure static sites.
 ---
 
@@ -23,6 +25,19 @@ a Fastify/TypeScript API that fronts PocketBase, shipped as one `docker compose`
 stack. This skill captures the **structure and patterns**, not a frozen copy of
 the source — you generate current-API code that follows the documented
 conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
+
+## UI rules for every project
+
+Before proposing, implementing, changing, reviewing, or verifying UI, check the
+available skills and read `ui-ux-pro-max`, including for small visual fixes.
+Follow its wrapper to the canonical instructions and use web/React guidance.
+Apply its recommendations within the shared PWA structure below.
+
+Use the Chinese-learning **web/PWA** structure for new projects: stable bottom
+destinations, central Add/Create, compact daily Home, grouped collections,
+content-first activity, grouped Profile settings, and a dock for transient
+work. Adapt labels and branding to the product. The shared UI references and
+generated project instructions keep later additions consistent with that system.
 
 ## What this skill contains
 
@@ -36,6 +51,8 @@ conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
   OS-owned swipe-back navigation).
 - `references/theme-tokens.md` — the CSS-token system and how to derive a
   light/dark palette from the user's answers.
+- `references/mobile-design.md` — the shared Chinese PWA structure, project UI
+  contract, instruction templates, and visual verification rules.
 - `references/features.md` — what each optional feature adds/removes.
 - `templates/` — the **stable** boilerplate worth copying verbatim (compose,
   Dockerfiles, vite PWA config, index.html, tsconfigs, init migration,
@@ -47,9 +64,10 @@ conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
 - `scripts/make-icons.sh` — generates placeholder PWA icons from an accent
   colour + letters.
 
-**Read `references/patterns.md` and `references/architecture.md` before
-generating any code** — they define the conventions the generated app must
-follow.
+**Read `references/architecture.md`, `references/patterns.md`,
+`references/theme-tokens.md`, and `references/mobile-design.md` completely
+before generating any code** — they define the architecture and experience the
+generated app must follow.
 
 ## Workflow
 
@@ -59,10 +77,13 @@ First settle the app identity conversationally (ask only what wasn't given):
 - **App name** and a lowercase **slug** (used for package names, dirs,
   `admin@<slug>.local`).
 - One-line **description** (PWA manifest).
+- The primary **resource/object**, repeatable **action**, and what a returning
+  user should be able to **resume** immediately.
 - **Accent / brand color** (hex). Ask for a second brand color only if they
   want one.
 - **Target directory** (default: a new folder named after the slug).
-- **Language** for `<html lang>` (default `en`).
+- **UI language** for `<html lang>` (default `en`), recorded separately from
+  the language of user-authored or consumed content.
 
 Then ask the choice-based questions with **one `AskUserQuestion` call** (present
 all four together):
@@ -71,12 +92,16 @@ all four together):
    accent).
 2. **Dark mode** — `Both light + dark (recommended)` / `Light only` /
    `Dark only`.
-3. **Fonts** — `Bricolage Grotesque + Figtree (baseline)` / `System fonts` /
-   `Custom (they name them)`.
+3. **Fonts** — `System fonts (recommended for native/offline)` /
+   `Bundled/self-hosted` / `External web fonts` / `Custom`.
 4. **Features** (multi-select) — `Web Push notifications` / `Realtime (SSE)` /
    `Roles + admin screen` / `iOS install tuning`. See `references/features.md`.
 
 If the user already stated any of these, skip that question.
+
+Use the shared shell's roles to infer meaningful root destinations. Ask about
+navigation only when the product leaves a material choice unresolved. Clear
+creation, confirmation, safe areas, and zoom support are baseline requirements.
 
 ### 2. Confirm current library versions
 
@@ -105,13 +130,19 @@ every copied file:
 | `__APP_LANG__` | html lang |
 | `__ACCENT__` | accent hex |
 | `__BG_LIGHT__` / `__BG_DARK__` | light/dark `--bg` (from the palette you derive) |
-| `__FONT_LINK__` | Google Fonts `<link>` (or delete the line for system fonts) |
+| `__FONT_HEAD__` | optional self-hosted preload or external font tags; delete for system fonts |
+
+Copy the root project instruction templates linked from
+`references/mobile-design.md` and generate the project's `UI_GUIDE.md` as
+specified there. Preserve existing project instructions when present.
 
 Also write `package.json` for `frontend/` and `api/` (not templated — generate
 with the confirmed versions and the scripts from `stack.md`: frontend
-`dev/build/preview`, api `dev` = `tsx watch src/index.ts`, `start` = `tsx
+`dev/build/preview/typecheck/test/test:e2e`, api `dev` = `tsx watch src/index.ts`, `start` = `tsx
 src/index.ts`, `typecheck`, `test`), plus `.gitignore` files (ignore
 `node_modules`, `dist`, `pb_data`, `.env`).
+Configure component tests and the mobile browser checks from the shared UI
+reference; keep browser binaries and test reports out of git.
 
 ### 4. Generate the theme
 
@@ -122,8 +153,24 @@ light-only, the `--ion-*` bridge, and the `ui-` component classes the pages
 use). Keep `__BG_LIGHT__`/`__BG_DARK__` consistent across `variables.css`,
 `index.html`, `lib/theme.ts`, and the manifest in `vite.config.ts`. Wire the
 chosen fonts into `--ion-font-family`, the heading font, and `index.html`.
+Prefer system or bundled fonts with content-language fallbacks. Verify offline
+launch when external fonts are selected. Reuse shared component and state
+styles across pages and verify contrast separately in each theme.
 
-### 5. Generate the application code following the patterns
+### 5. Design the interaction map
+
+Before writing components, record the UI map in the generated `UI_GUIDE.md`
+using `references/mobile-design.md`: page hierarchy, stable root destinations,
+primary action, returning/resume state, transient activity, creation flow,
+theme/components, and loading/empty/error/offline states.
+
+Start with the shared shell's Home, collection, central labeled Add/Create,
+main activity, and Profile roles. Adapt names and omit irrelevant destinations
+without inventing features. Record the chosen routes and order, then keep them
+stable when transient work starts. Use the shared page hierarchy for every
+generated page and update the guide when product decisions change.
+
+### 6. Generate the application code following the patterns
 
 Write the frontend `src/` (main.tsx, App.tsx, sw.ts, vite-env.d.ts, the `lib/`
 data+theme+ux helpers, `auth/AuthContext.tsx`, `components/`, and the example
@@ -138,6 +185,13 @@ logic; the user replaces `items` with their own.
 Only generate the code for the features that are ON (see `references/
 features.md`); omit the `[FEATURE: x]` blocks for features that are OFF, and
 leave the init migration / env / deps trimmed to match.
+
+Build every example page from the shared UI contract: a compact daily Home,
+grouped collection with actionable empty states, one labeled creation flow,
+content-first activity/detail, grouped Profile settings, and a dock for
+transient activity. Reuse shared headers, buttons, fields, rows, and state
+displays. Keep UI-language labels separate from source content. Generate
+focused component checks for the behaviors required by the shared reference.
 
 #### Automatic PWA updates (required)
 
@@ -201,6 +255,8 @@ shell in `ConfirmProvider` (inside `IonApp`), and route **every** delete/remove
 — including the "unsave" side of save toggles that lose server-side progress —
 through `await confirm({...})` before mutating. Add the `ui-confirm-*` sheet
 classes to `variables.css`. Wording, mechanics, and CSS: `patterns.md` §13.
+Use the same provider before sign out or abandoning a meaningful draft.
+Cancellation must preserve authentication, data, and entered work.
 
 #### Swipe-to-reveal edit/delete on user-created rows (required)
 
@@ -214,6 +270,8 @@ an edit bottom sheet) and `onDelete` (must route through the ConfirmModal
 reveal itself when an option is chosen, so a cancelled confirm never leaves a
 row hanging open. Add the `ui-slide-*` classes to `variables.css`. Full
 mechanics, usage snippet, and CSS: `patterns.md` §16.
+Expose equivalent actions through an accessible menu or detail view so a
+swipe is not required for keyboard or screen-reader users.
 
 #### Pull-to-refresh on tab-root pages (required)
 
@@ -221,6 +279,8 @@ Copy `templates/frontend/src/components/PageRefresher.tsx` verbatim and render
 it as the first child of `IonContent` on every tab-root/list page, passing that
 page's query-key families (e.g.
 `<PageRefresher queryKeys={[keys.items]} />`). Details: `patterns.md` §14.
+Apply this to data-bearing pages; omit it on Add forms and while reorder/edit
+gestures are active. Complete refresh on failure as well as success.
 
 #### No back navigation on tab roots (required)
 
@@ -239,17 +299,27 @@ both-edges `touchstart` variant), and the dynamic-root pattern: `patterns.md`
 §15. Verify on a real device — DevTools touch emulation cannot reproduce the
 OS edge-swipe gesture.
 
-### 6. Icons
+### 7. Icons
 
 Run `scripts/make-icons.sh <app>/frontend/public "<accent>" "<contrast>"
-"<1-2 letters>"` to write `icon.svg`, `icon-192.png`, `icon-512.png`. If no
+"<1-2 letters>"` to write `icon.svg`, `icon-180.png`, `icon-192.png`, `icon-512.png`. If no
 SVG→PNG converter is installed it writes the SVG and warns — tell the user to
 supply the PNGs (or real artwork) before shipping.
 
-### 7. Verify and hand off
+### 8. Verify and hand off
 
 - Run `tsc --noEmit` (typecheck) in `frontend/` and `api/` if deps are
   installed; otherwise note that `npm install` is needed first.
+- Run component and mobile browser checks from `references/mobile-design.md`
+  in WebKit at 320×568, 390×844, and 430×932. Check supported light/dark themes,
+  larger text, reduced motion, overflow, 44×44 targets, safe areas, dock/tab
+  clearance, keyboard-open creation, accessible names, and dialog focus.
+- Compare the generated Home, collection, Add, activity/detail, and Profile
+  against `UI_GUIDE.md`. Verify the root instructions link to that guide.
+  Record evidence and outstanding device checks there; browser automation is
+  an approximation. Verify installed-iPhone safe areas, keyboard, Back
+  gestures, VoiceOver, offline launch, installation, and update lifecycle on
+  a physical device before shipping.
 - Print next steps: `cp .env.example .env` and fill it (generate VAPID keys with
   `npx web-push generate-vapid-keys` if push is on); `docker compose up -d
   --build`; create the PocketBase superuser

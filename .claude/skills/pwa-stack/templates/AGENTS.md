@@ -1,0 +1,44 @@
+# Project instructions
+
+## UI work
+
+For every UI/UX task, including small visual fixes, interaction changes, and
+verification, check the available skills and read `ui-ux-pro-max` before
+proposing, implementing, or reviewing the change. Follow wrappers to their
+canonical instructions and use guidance for this project's web/React platform.
+Read the references relevant to the task. Report unavailable skill guidance.
+
+Read [UI_GUIDE.md](UI_GUIDE.md) before UI work. It records this project's routes,
+page hierarchy, theme, shared components, and verification requirements. Extend
+the chosen system and update that guide when an approved design decision changes.
+
+- Preserve the documented bottom destination order and labels. Use the Home,
+  collection, central Add/Create, main activity, and Profile roles that apply
+  to this product. Keep transient activity in the dock above the tabs and
+  utilities under their owning pages.
+- Follow the page hierarchy: a compact daily overview and next action on Home;
+  grouped/searchable content with labeled creation and actionable empty states
+  in the collection; one guided creation flow; content-first activity/detail;
+  grouped settings and account actions in Profile.
+- Reuse the shared page/header, button, field, row, card, segmented-control,
+  state, confirmation, and dock components. Keep theme values in semantic
+  tokens and use the same spacing and type hierarchy across screens.
+- Provide loading, empty, error/Retry, offline, and permission states as relevant.
+  Retain drafts, prevent duplicate submissions, and roll back failed optimistic
+  changes. Keep interface language separate from authored content.
+- Confirm destructive actions, meaningful draft abandonment, and sign out
+  before changing data or authentication. Cancellation preserves state.
+- Preserve normal detail Back behavior and stable tab roots. Provide refresh on
+  data-bearing root/list pages and accessible alternatives to row swipe actions.
+- Keep targets at least 44×44 CSS px, focus visible, controls named, text
+  scalable, zoom enabled, and safe areas/keyboard clear. Check light/dark
+  contrast and reduced motion. Keep reading and form surfaces opaque.
+
+## UI verification
+
+Run the checks relevant to the change and record evidence or remaining limits
+in `UI_GUIDE.md`. Check small and large mobile widths, the affected themes,
+larger text, keyboard/focus behavior, error/retry, and dock/tab overlap. Use
+browser checks for regressions and a physical installed iPhone for iOS-specific
+safe areas, keyboard, gestures, VoiceOver, and PWA lifecycle behavior. Distinguish
+what was tested from what still needs device verification.

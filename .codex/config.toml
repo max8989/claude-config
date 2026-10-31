@@ -52,6 +52,12 @@ trust_level = "trusted"
 [projects."/home/maxime/repos/lazyvim-config"]
 trust_level = "trusted"
 
+[projects."/home/maxime/repos/audio-notes"]
+trust_level = "trusted"
+
+[projects."/home/maxime/repos/agentic-audio"]
+trust_level = "trusted"
+
 [tui]
 vim_mode_default = true
 status_line = ["model-with-reasoning", "current-dir"]
@@ -70,7 +76,14 @@ SUDO_ASKPASS = "/home/maxime/.local/bin/codex-sudo-askpass"
 source_type = "git"
 source = "https://github.com/mksglu/context-mode.git"
 
+[marketplaces.agent-skills]
+source_type = "git"
+source = "https://github.com/addyosmani/agent-skills.git"
+
 [plugins."context-mode@context-mode"]
+enabled = true
+
+[plugins."agent-skills@agent-skills"]
 enabled = true
 
 [hooks.state]

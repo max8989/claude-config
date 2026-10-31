@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generate placeholder PWA icons (icon-192.png, icon-512.png) and icon.svg from
+# Generate placeholder PWA icons (icon-180.png, icon-192.png, icon-512.png) and icon.svg from
 # an accent color + a one/two-letter mark. Replace these with real artwork
 # before shipping. Usage:
 #   make-icons.sh <out_dir> <accent_hex> <fg_hex> <letters>
@@ -36,6 +36,7 @@ render() { # <size> <file>
   fi
 }
 
+render 180 "$OUT/icon-180.png" || true
 render 192 "$OUT/icon-192.png" || true
 render 512 "$OUT/icon-512.png" || true
 echo "Icons written to $OUT (replace with real artwork before shipping)."

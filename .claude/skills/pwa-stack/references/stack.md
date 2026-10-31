@@ -22,8 +22,9 @@ releases page.
 | `@tanstack/react-query` | ^5 | Server-state cache: queries, optimistic mutations, invalidation |
 | `pocketbase` (JS SDK) | ^0.26 | **Auth only** on the client (`authWithPassword`, `authStore`) |
 
-Fonts: loaded from Google Fonts in `index.html` (baseline used *Bricolage
-Grotesque* for headings + *Figtree* for body). Swap or drop for system fonts.
+Fonts: follow the project's font choice and the shared `theme-tokens.md`
+contract. Prefer system or bundled/self-hosted fonts, with content-language
+fallbacks. Add external font tags only when selected and verify offline launch.
 
 ## API
 

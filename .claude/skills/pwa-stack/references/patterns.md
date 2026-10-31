@@ -338,11 +338,14 @@ install steps are the entry point to notifications working at all.
 - **Haptics** (`lib/haptics.ts`): `navigator.vibrate` wrapped to be a silent
   no-op where unsupported (iOS Safari, desktop). Tap on writes, success pattern
   on completion.
-- **Skeletons** while queries load, not spinners.
+- **Skeletons** while queries load, followed by an explicit error + Retry
+  state if loading fails.
 - **Lazy-load** every page except Login/Home; warm the likely-next chunks after
   first paint so tab switches don't flash the fallback.
-- [FEATURE: ios] `viewport-fit=cover` + `touch-action: manipulation` +
-  `user-scalable=no` for a chromeless feel.
+- Always preserve pinch zoom, use `viewport-fit=cover`, and keep custom chrome
+  clear of safe areas. Use `touch-action: manipulation` and follow
+  `mobile-design.md` for shared page hierarchy, targets, keyboard, and dock
+  behavior.
 
 ---
 

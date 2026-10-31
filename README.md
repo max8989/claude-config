@@ -24,6 +24,20 @@ install.sh            # one-shot setup: prompts for tokens, installs prereqs, fe
 stow.sh               # symlink wrapper around GNU stow (called by install.sh)
 ```
 
+### Shared design and native skills
+
+The following skills are vendored under `.claude/skills/` for Claude Code, with
+`.agents/skills/` wrappers for Codex and other Agent Skills clients:
+
+- [UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill): visual
+  direction, design systems, and searchable UX and implementation guidance.
+- [Callstack React Native Best Practices](https://github.com/callstackincubator/agent-skills/tree/main/skills/react-native-best-practices):
+  native performance guidance for scrolling, animations, startup, and memory use.
+
+Run `./stow.sh` to expose both entry points under your home directory. UI/UX Pro
+Max's bundled search uses Python 3 and resolves its scripts and data through
+`~/.claude/skills/ui-ux-pro-max/` for both clients.
+
 ## Install
 
 ### 1. Run the setup script
