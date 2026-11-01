@@ -20,7 +20,7 @@ releases page.
 | `vite-plugin-pwa` | ^0.20 | Manifest + service-worker wiring. Use `injectManifest` so the SW is our own `src/sw.ts` (needed for Web Push). |
 | `workbox-core` / `workbox-precaching` | ^7 | Precache + `clientsClaim` inside the SW |
 | `@tanstack/react-query` | ^5 | Server-state cache: queries, optimistic mutations, invalidation |
-| `pocketbase` (JS SDK) | ^0.26 | **Auth only** on the client (`authWithPassword`, `authStore`) |
+| `pocketbase` (JS SDK) | ^0.26 | **Auth only** on the client (selected `authWithPassword` / `authWithOTP`, `authRefresh`, `authStore`) |
 
 Fonts: follow the project's font choice and the shared `theme-tokens.md`
 contract. Prefer system or bundled/self-hosted fonts, with content-language

@@ -12,8 +12,8 @@ description: >-
   with PocketBase/Ionic", "installable app with notifications", "spin up a
   frontend + backend + db". Uses the shared Chinese-learning PWA UI structure,
   reusable light/dark components, guided creation, and mobile visual QA, with
-  project instructions for future UI changes. Asks about colors, fonts, and
-  features before generating. NOT for adding
+  project instructions for future UI changes. Asks about colors, fonts,
+  password or email OTP sign-in, and features. NOT for adding
   a feature to an existing app of a different stack, or for pure static sites.
 ---
 
@@ -66,6 +66,8 @@ generated project instructions keep later additions consistent with that system.
   optimistic-mutation-then-toast, global loading bar, SSE invalidation, theme
   tokens, custom SW update flow, API DI/route shape, native touches,
   OS-owned swipe-back navigation).
+- `references/authentication.md` — password or email OTP selection, the shared
+  Chinese-learning email/code UI, account provisioning, mail, and API contract.
 - `references/theme-tokens.md` — the CSS-token system and how to derive a
   light/dark palette from the user's answers.
 - `references/mobile-design.md` — the shared Chinese PWA structure, project UI
@@ -82,7 +84,8 @@ generated project instructions keep later additions consistent with that system.
   colour + letters.
 
 **Read `references/architecture.md`, `references/patterns.md`,
-`references/theme-tokens.md`, and `references/mobile-design.md` completely
+`references/authentication.md`, `references/theme-tokens.md`, and
+`references/mobile-design.md` completely
 before generating any code** — they define the architecture and experience the
 generated app must follow.
 
@@ -102,16 +105,23 @@ First settle the app identity conversationally (ask only what wasn't given):
 - **UI language** for `<html lang>` (default `en`), recorded separately from
   the language of user-authored or consumed content.
 
-Then ask the choice-based questions with **one `AskUserQuestion` call** (present
-all four together):
+Then ask the remaining choice-based questions in compact groups using
+`AskUserQuestion` when available; respect the tool's question limit and do not
+repeat answers the user already supplied:
 
-1. **Surface tone** — `Warm` / `Cool` / `Neutral` (drives the greys behind the
+1. **Sign-in method** — ask "Should users sign in with a password or with an
+   email OTP (a code sent by email, without a password)?" Offer `Password` /
+   `Email OTP`. Record `auth: password` or `auth: email-otp`; do not silently
+   default to password. For OTP, settle automatic account creation versus
+   invited/existing accounts and mail delivery setup using
+   `references/authentication.md`. Reuse an explicit choice already supplied.
+2. **Surface tone** — `Warm` / `Cool` / `Neutral` (drives the greys behind the
    accent).
-2. **Dark mode** — `Both light + dark (recommended)` / `Light only` /
+3. **Dark mode** — `Both light + dark (recommended)` / `Light only` /
    `Dark only`.
-3. **Fonts** — `System fonts (recommended for native/offline)` /
+4. **Fonts** — `System fonts (recommended for native/offline)` /
    `Bundled/self-hosted` / `External web fonts` / `Custom`.
-4. **Features** (multi-select) — `Web Push notifications` / `Realtime (SSE)` /
+5. **Features** (multi-select) — `Web Push notifications` / `Realtime (SSE)` /
    `Roles + admin screen` / `iOS install tuning`. See `references/features.md`.
 
 If the user already stated any of these, skip that question.
@@ -148,6 +158,10 @@ every copied file:
 | `__ACCENT__` | accent hex |
 | `__BG_LIGHT__` / `__BG_DARK__` | light/dark `--bg` (from the palette you derive) |
 | `__FONT_HEAD__` | optional self-hosted preload or external font tags; delete for system fonts |
+
+Adapt the copied init migration to the selected sign-in method using
+`references/authentication.md`; its public roster rules apply only to password
+mode. OTP requires its own collection configuration and guarded API routes.
 
 Copy the root project instruction templates linked from
 `references/mobile-design.md` and generate the project's `UI_GUIDE.md` as
@@ -202,6 +216,12 @@ logic; the user replaces `items` with their own.
 Only generate the code for the features that are ON (see `references/
 features.md`); omit the `[FEATURE: x]` blocks for features that are OFF, and
 leave the init migration / env / deps trimmed to match.
+
+Generate the selected auth mode end to end from `references/authentication.md`:
+login UI, `AuthContext`, API routes, migration, and setup instructions. For OTP,
+open directly on the email form and follow the Chinese-learning PWA's shared
+`EmailLogin` component and states. Record the mode and login states in
+`UI_GUIDE.md`; omit password/roster UI in OTP mode.
 
 Build every example page from the shared UI contract: a compact daily Home,
 grouped collection with actionable empty states, one labeled creation flow,
@@ -327,6 +347,9 @@ supply the PNGs (or real artwork) before shipping.
 
 - Run `tsc --noEmit` (typecheck) in `frontend/` and `api/` if deps are
   installed; otherwise note that `npm install` is needed first.
+- Verify the chosen sign-in flow and the auth acceptance checks in
+  `references/authentication.md`. For OTP, verify actual email delivery before
+  describing sign-in as ready; document any pending mail configuration.
 - Run component and mobile browser checks from `references/mobile-design.md`
   in WebKit at 320×568, 390×844, and 430×932. Check supported light/dark themes,
   larger text, reduced motion, overflow, 44×44 targets, safe areas, dock/tab
@@ -342,7 +365,8 @@ supply the PNGs (or real artwork) before shipping.
   --build`; create the PocketBase superuser
   (`docker compose exec pocketbase /pb/pocketbase superuser upsert <email>
   <password>`); open `https://<app-domain>/_/` and sign in as the PocketBase
-  superuser, add users with `active = true`; open
+  superuser, provision accounts according to the selected auth mode (`active =
+  true` for invited users; automatic creation only when chosen); open
   the app on the API port. Remind them HTTPS (via their own reverse proxy) is
   required for service workers and Web Push in production, and that this stack
   intentionally does not include TLS/proxy.

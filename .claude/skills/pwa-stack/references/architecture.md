@@ -56,8 +56,8 @@ is a separate operator interface at `https://<app-domain>/_/`, proxied through
 the same Node API with the operator's own superuser credentials.
 
 The frontend's PocketBase client (`lib/pb.ts`) is **auth-only** —
-`new PocketBase("/")`. It is used purely for `authWithPassword` / `authRefresh`
-and to hold the auth token in `authStore`. Everything else goes through
+`new PocketBase("/")`. It uses the selected `authWithPassword` or `authWithOTP`
+method, `authRefresh`, and `authStore` for the session. Everything else goes through
 `lib/api.ts`, a typed `fetch` wrapper that attaches the bearer token. That
 client also owns the session lifecycle — expiry detection and the sliding
 `authRefresh` — see `patterns.md` §6, worth reading before writing either file.
@@ -75,13 +75,18 @@ Why this shape:
 
 ```
 Browser ──/api/collections/users/auth-*──▶ API ──(streamed passthrough)──▶ PocketBase   (login/refresh only)
+Browser ──POST /api/auth/email/request──▶ API ──(guarded OTP request)──▶ PocketBase   (email-otp mode only)
 Browser ──/api/<resource> (Bearer token)─▶ API ──(superuser client)──────▶ PocketBase   (all data)
 Browser ──/api/events?token=… (EventSource)▶ API  (SSE; in-process event bus fan-out)
 Operator ──/_/ + management API─────────▶ API ──(operator credentials)─▶ PocketBase dashboard/API
 Browser ──GET / , /home , …───────────────▶ API ──(static)──────────────▶ built SPA (index.html fallback)
 ```
 
-For ordinary app clients, proxy only user login/refresh and read-only
+Implement the selected sign-in routes explicitly using
+[the authentication contract](authentication.md); the diagram's `auth-*` is
+shorthand, not a wildcard allowlist. OTP verification needs its guards before
+upstream forwarding, and OTP requests must go through the app's request route.
+For ordinary app clients, proxy only selected user login/refresh and read-only
 `/api/files/*` (so avatars load with PocketBase off the public network).
 Also serve the dashboard and its superuser authentication/management APIs
 according to [the dashboard contract](pocketbase-admin.md). Reject unauthorized

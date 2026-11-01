@@ -10,9 +10,10 @@ description: >-
   and "frontend + backend + db". Includes CSS-token light/dark theming and an
   shared Chinese-learning PWA UI structure with stable bottom navigation,
   guided creation, reusable components, confirmations, and mobile visual QA.
-  Persist the UI rules for future changes. Ask about hierarchy, brand, fonts, languages, and
-  optional features before generating. Includes isolated prod/dev deployment
-  and optional telemetry via the independent observability skill. Not for a
+  Persist the UI rules for future changes. Ask about brand, fonts, languages,
+  password or email OTP sign-in, and optional features before generating.
+  Includes isolated prod/dev deployment and optional telemetry via the
+  independent observability skill. Not for a
   feature added to an existing app of another stack or for a pure static site.
 ---
 
@@ -64,6 +65,8 @@ generated project instructions keep later additions consistent with that system.
 - `references/patterns.md` — the house conventions (auth-only client + `api()`,
   optimistic-mutation-then-toast, global loading bar, SSE invalidation, theme
   tokens, custom SW update flow, API DI/route shape, native touches).
+- `references/authentication.md` — password or email OTP selection, the shared
+  Chinese-learning email/code UI, account provisioning, mail, and API contract.
 - `references/theme-tokens.md` — the CSS-token system and how to derive a
   light/dark palette from the user's answers.
 - `references/mobile-design.md` — entry point to the shared Chinese PWA
@@ -79,7 +82,8 @@ generated project instructions keep later additions consistent with that system.
   colour + letters.
 
 **Read `references/architecture.md`, `references/patterns.md`,
-`references/theme-tokens.md`, and `references/mobile-design.md` completely
+`references/authentication.md`, `references/theme-tokens.md`, and
+`references/mobile-design.md` completely
 before generating any code** — they define the architecture and experience the
 generated app must follow.
 
@@ -102,16 +106,22 @@ First settle the app identity conversationally (ask only what wasn't given):
 Then ask the remaining choice-based questions in compact groups; do not repeat
 answers the user already supplied:
 
-1. **Surface tone** — `Warm` / `Cool` / `Neutral` (drives the greys behind the
+1. **Sign-in method** — ask "Should users sign in with a password or with an
+   email OTP (a code sent by email, without a password)?" Offer `Password` /
+   `Email OTP`. Record `auth: password` or `auth: email-otp`; do not silently
+   default to password. For OTP, settle automatic account creation versus
+   invited/existing accounts and mail delivery setup using
+   `references/authentication.md`. Reuse an explicit choice already supplied.
+2. **Surface tone** — `Warm` / `Cool` / `Neutral` (drives the greys behind the
    accent).
-2. **Dark mode** — `Both light + dark (recommended)` / `Light only` /
+3. **Dark mode** — `Both light + dark (recommended)` / `Light only` /
    `Dark only`.
-3. **Fonts** — `System fonts (recommended for native/offline)` /
+4. **Fonts** — `System fonts (recommended for native/offline)` /
    `Bundled/self-hosted` / `External web fonts` / `Custom`.
-4. **Features** (multi-select) — `Web Push notifications` / `Realtime (SSE)` /
+5. **Features** (multi-select) — `Web Push notifications` / `Realtime (SSE)` /
    `Roles + admin screen` / `iOS install tuning (recommended for mobile-first
    PWAs)`. See `references/features.md`.
-5. **Observability / telemetry** — `None` / `Grafana observability`.
+6. **Observability / telemetry** — `None` / `Grafana observability`.
    Reuse an already stated preference. When enabled, follow
    [the independent observability skill](../observability/SKILL.md) after the
    app architecture is clear; it owns discovery, instrumentation, reuse of
@@ -154,6 +164,10 @@ placeholders in every copied file:
 | `__ACCENT__` | accent hex |
 | `__BG_LIGHT__` / `__BG_DARK__` | light/dark `--bg` (from the palette you derive) |
 | `__FONT_HEAD__` | optional self-hosted preload or external font tags; delete for system fonts |
+
+Adapt the copied init migration to the selected sign-in method using
+`references/authentication.md`; its public roster rules apply only to password
+mode. OTP requires its own collection configuration and guarded API routes.
 
 Copy the root project instruction templates linked from
 `references/mobile-design.md` and generate the project's `UI_GUIDE.md` as
@@ -210,6 +224,12 @@ Only generate the code for the features that are ON (see `references/
 features.md`); omit the `[FEATURE: x]` blocks for features that are OFF, and
 leave the init migration / env / deps trimmed to match.
 
+Generate the selected auth mode end to end from `references/authentication.md`:
+login UI, `AuthContext`, API routes, migration, and setup instructions. For OTP,
+open directly on the email form and follow the Chinese-learning PWA's shared
+`EmailLogin` component and states. Record the mode and login states in
+`UI_GUIDE.md`; omit password/roster UI in OTP mode.
+
 Make the interaction blueprint concrete in the generated example:
 
 - Give Create a visible text label in the shell, on Home/collection, and in the
@@ -254,6 +274,9 @@ and the application usable when it is disabled or the receiver is unavailable.
 - Run typecheck, unit/component tests, and production builds in `frontend/` and
   `api/` if dependencies are installed; otherwise note that `npm install` is
   needed first.
+- Verify the chosen sign-in flow and the auth acceptance checks in
+  `references/authentication.md`. For OTP, verify actual email delivery before
+  describing sign-in as ready; document any pending mail configuration.
 - Run the browser matrix from `references/mobile-design.md` in WebKit at
   320×568, 390×844, and 430×932. Check light/dark, reduced motion, horizontal
   overflow, 44×44 targets, safe-area/non-overlap, the keyboard-open create
@@ -273,7 +296,8 @@ and the application usable when it is disabled or the receiver is unavailable.
 - Write first-time server setup and prod/dev instructions in the generated
   README using `references/deployment.md`. Deployment creates/upserts the
   superuser; give `https://<app-domain>/_/` as the dashboard address and explain
-  adding app users with `active = true` afterwards. Verify dashboard login and
+  account provisioning for the selected auth mode (`active = true` for invited
+  app users; automatic creation only when chosen). Verify dashboard login and
   management calls following `references/pocketbase-admin.md`. Generate
   VAPID keys only when push is selected. Inspect/confirm the intended server,
   environment and existing proxy before any live deployment; generating these

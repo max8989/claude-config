@@ -12,7 +12,9 @@ migrate((app) => {
   users.fields.add(new SelectField({ name: "role", maxSelect: 1, values: ["admin", "member"], required: true }))
   users.fields.add(new BoolField({ name: "active" }))
   // `name` and `avatar` already exist on the default users collection.
-  // Anyone (even unauthenticated) may list active members for the login roster.
+  // Password mode only: active members may be listed for the login roster.
+  // Email OTP: replace both rules with null and configure OTP/passwordAuth
+  // before app.save(users), following references/authentication.md.
   users.listRule = "active = true"
   users.viewRule = "active = true"
   // Session length. PocketBase issues stateless JWTs that die exactly

@@ -13,7 +13,7 @@ wrapper that attaches the bearer token, normalizes errors, and logs out on 401.
 
 ```ts
 // lib/pb.ts
-export const pb = new PocketBase("/")           // auth only: authWithPassword, authStore
+export const pb = new PocketBase("/")           // selected sign-in method, authRefresh, authStore
 
 // lib/api.ts
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -134,12 +134,12 @@ clobber optimistic state.
 
 ---
 
-## 6. Auth: roster + password, `requireUser` / `requireAdmin`
+## 6. Auth: password or email OTP, `requireUser` / `requireAdmin`
 
-- Login is a two-step roster picker: a **public** `/api/roster` endpoint lists
-  active members (name + avatar), the user picks themselves and enters a
-  password. PocketBase `users.listRule = "active = true"` allows the pre-auth
-  list.
+- Use the method selected during requirements gathering. Follow
+  [the authentication contract](authentication.md) for password mode's roster
+  picker or email OTP mode's direct email → code form, API guards, mail setup,
+  and collection settings. The public roster rules apply only to password mode.
 - `AuthContext` wraps `pb.authStore`: `user` comes from `authStore.record`
   **gated on `authStore.isValid`**, and `authStore.onChange` re-renders on
   login/logout. A dead token anywhere calls `expireSession()`, which unmounts

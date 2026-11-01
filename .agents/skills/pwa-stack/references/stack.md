@@ -20,7 +20,7 @@ releases page.
 | `vite-plugin-pwa` | ^0.20 | Manifest + service-worker wiring. Use `injectManifest` so the SW is our own `src/sw.ts` (needed for Web Push). |
 | `workbox-core` / `workbox-precaching` | ^7 | Precache + `clientsClaim` inside the SW |
 | `@tanstack/react-query` | ^5 | Server-state cache: queries, optimistic mutations, invalidation |
-| `pocketbase` (JS SDK) | ^0.26 | **Auth only** on the client (`authWithPassword`, `authStore`) |
+| `pocketbase` (JS SDK) | ^0.26 | **Auth only** on the client (selected `authWithPassword` / `authWithOTP`, `authRefresh`, `authStore`) |
 | `vitest` + `jsdom` + Testing Library | current compatible | Component tests for interaction, routing, confirmation, and state boundaries |
 | `@playwright/test` + `@axe-core/playwright` | current compatible | WebKit mobile viewport, screenshot, overflow, and accessibility regression checks |
 
