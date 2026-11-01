@@ -32,6 +32,16 @@ At every invocation, before gathering requirements or doing project work, follow
 to this skill, summarize available updates, and ask before applying them. This
 check concerns the installed skill; generated apps keep their own update flow.
 
+## PocketBase dashboard (required)
+
+Expose the built-in PocketBase dashboard at `https://<app-domain>/_/` on the
+same public origin as the app, including in production, using PocketBase
+superuser login. This is included even when the optional in-app admin feature
+is off. Follow [the dashboard contract](references/pocketbase-admin.md) when
+generating the API gateway, service worker, and README; the dashboard needs its
+authenticated API calls as well as its HTML/assets. Keep the direct PocketBase
+host port private; public dashboard access goes through the app's Node API.
+
 ## UI rules for every project
 
 Before proposing, implementing, changing, reviewing, or verifying UI, check the
@@ -262,7 +272,9 @@ and the application usable when it is disabled or the receiver is unavailable.
   guards, distinct projects/data/ports, and failure exits before handoff.
 - Write first-time server setup and prod/dev instructions in the generated
   README using `references/deployment.md`. Deployment creates/upserts the
-  superuser; explain adding app users with `active = true` afterwards. Generate
+  superuser; give `https://<app-domain>/_/` as the dashboard address and explain
+  adding app users with `active = true` afterwards. Verify dashboard login and
+  management calls following `references/pocketbase-admin.md`. Generate
   VAPID keys only when push is selected. Inspect/confirm the intended server,
   environment and existing proxy before any live deployment; generating these
   files is not a request to deploy them. HTTPS and reverse proxy/TLS remain

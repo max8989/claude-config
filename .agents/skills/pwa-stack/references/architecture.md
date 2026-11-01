@@ -54,10 +54,11 @@ Push refuse to run on insecure origins.
 
 ## The one rule that shapes everything: the API fronts PocketBase
 
-The browser never talks to PocketBase directly for data. It talks to the Node
-API, which holds a long-lived **superuser** PocketBase client and does all
-reads/writes. PocketBase collection rules are therefore locked down; the API is
-the only trusted caller.
+The PWA frontend talks to the Node API for application data. The API holds a
+long-lived **superuser** PocketBase client and performs application reads/writes;
+PocketBase collection rules stay locked down. The built-in PocketBase dashboard
+is a separate operator interface at `https://<app-domain>/_/`, proxied through
+the same Node API with the operator's own superuser credentials.
 
 The frontend's PocketBase client (`lib/pb.ts`) is **auth-only** —
 `new PocketBase("/")`. It is used purely for `authWithPassword` / `authRefresh`
@@ -79,18 +80,21 @@ Why this shape:
 Browser ──/api/collections/users/auth-*──▶ API ──(streamed passthrough)──▶ PocketBase   (login/refresh only)
 Browser ──/api/<resource> (Bearer token)─▶ API ──(superuser client)──────▶ PocketBase   (all data)
 Browser ──/api/events?token=… (EventSource)▶ API  (SSE; in-process event bus fan-out)
+Operator ──/_/ + management API─────────▶ API ──(operator credentials)─▶ PocketBase dashboard/API
 Browser ──GET / , /home , …───────────────▶ API ──(static)──────────────▶ built SPA (index.html fallback)
 ```
 
-The API proxies **only** the two auth endpoints and read-only `/api/files/*`
-(so avatars load with PocketBase off the public network). Every other
-`/api/collections/*` path is a deliberate 404 — clients cannot reach PocketBase
-generically.
+For ordinary app clients, proxy only user login/refresh and read-only
+`/api/files/*` (so avatars load with PocketBase off the public network).
+Also serve the dashboard and its superuser authentication/management APIs
+according to [the dashboard contract](pocketbase-admin.md). Reject unauthorized
+raw collection access and unknown API routes; preserve explicit app routes.
+Public dashboard access uses the app origin, not the private PocketBase port.
 
 ## Dev vs. production
 
 - **Local development:** run PocketBase (compose) + `npm run dev` in `frontend/` (Vite on
-  5173, proxies `/api` → `:3000`) + `npm run dev` in `api/` (tsx watch on 3000).
+  5173, proxies `/api` and `/_` → `:3000`) + `npm run dev` in `api/` (tsx watch on 3000).
   Web Push won't work on `http://localhost` in iOS Safari; test the subscribe
   flow on desktop Chrome and end-to-end push on an installed HTTPS build.
 - **Server production:** `./deploy.sh` (or `./deploy.sh prod`) from `main`

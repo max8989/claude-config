@@ -81,10 +81,14 @@ chmod 600 .env
 ```
 
 Make `deploy.sh` executable when generating it and commit its executable bit.
-The first run provisions the superuser; use the protected PocketBase admin UI
-to add app users with `active = true`. The app is served on `APP_PORT`;
-PocketBase admin defaults to loopback. Configure the host's chosen HTTPS
-proxy for the app; this skill does not choose its implementation.
+The first run provisions the superuser; sign in at `https://<app-domain>/_/`
+to add app users with `active = true`. The Node API on `APP_PORT` serves both
+the app and PocketBase's dashboard/management passthroughs following
+[the dashboard contract](pocketbase-admin.md). Configure the host's chosen
+HTTPS proxy to forward the whole app origin to `APP_PORT`, including `/_/`
+and the dashboard's API requests; this skill does not choose its implementation.
+`PB_ADMIN_PORT` remains loopback-bound for optional direct diagnostics; public
+dashboard access does not need a VPN or the server's private IP.
 
 For side-by-side server development, use a second clone/check-out directory.
 Ensure a remote `dev` branch exists and the checkout tracks it before pulling:
@@ -114,7 +118,8 @@ copy production database contents as part of setup. Ignore `.env`, `.env.*`
 - Run `python3 scripts/test_deploy.py` from this skill directory to exercise
   the template with isolated fake Git/Docker/curl commands; this never deploys.
 - For an authorized live run, verify both health checks and service status,
-  frontend assets/update flow, and that deploying dev leaves prod unchanged.
+  frontend assets/update flow, public `/_/` login and management calls without
+  a VPN, and that deploying dev leaves prod unchanged.
   Report mocked/config-only verification separately from real container tests.
 
 Consult current [Compose interpolation](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/),

@@ -6,22 +6,21 @@
 name: ${COMPOSE_PROJECT_NAME:-__APP_SLUG__}
 
 services:
-  # Private: only the api service reaches PocketBase over the compose network.
+  # The api gateway serves the public /_/ dashboard over the compose network.
   pocketbase:
     build: ./pocketbase
     restart: unless-stopped
     environment:
       TZ: ${TZ}
     ports:
-      # PocketBase admin UI (/_/). Loopback-only by default; set
-      # PB_ADMIN_BIND=0.0.0.0 in .env only where a reverse proxy serves it over
-      # HTTPS. Never point the public app at this port.
+      # Optional direct diagnostic access. Keep loopback-bound: the public
+      # dashboard is https://<app-domain>/_/ through the api service instead.
       - "${PB_ADMIN_BIND:-127.0.0.1}:${PB_ADMIN_PORT:-8093}:8090"
     volumes:
       - ${PB_DATA_DIR:-./pocketbase/pb_data}:/pb/pb_data
       - ./pocketbase/pb_migrations:/pb/pb_migrations
 
-  # The only exposed service: REST API + SSE + serves the built SPA.
+  # Public gateway: REST API + SSE + built SPA + PocketBase /_/ dashboard.
   api:
     build: ./api
     restart: unless-stopped

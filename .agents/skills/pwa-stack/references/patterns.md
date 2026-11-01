@@ -197,11 +197,16 @@ app.setErrorHandler((err, _req, reply) => {
   const status = typeof err.status === "number" ? err.status : err.statusCode ?? 500
   reply.code(status).send({ status, message: err.message || "Internal error" })
 })
-// SPA fallback: unknown non-/api GETs return index.html; unknown /api paths 404.
+// Register the dashboard gateway first; /api and /_ never fall back to index.html.
 ```
 
 Pure business logic lives in `domain/` with no Fastify types, so it unit-tests
 directly.
+
+The API also serves `/_/` and the dashboard's authenticated management calls
+using [the PocketBase dashboard contract](pocketbase-admin.md). Preserve app
+route precedence and require PocketBase superuser authority for protected
+management operations; the optional in-app admin role is not sufficient.
 
 ---
 
@@ -219,6 +224,9 @@ variables are mapped to the brand tokens so components re-skin for free. See
 ---
 
 ## 9. PWA: custom SW + prompt-to-update reload flow
+
+Exclude `/api`, `/_`, and their descendants from service worker navigation
+fallbacks and runtime caching, as specified in `pocketbase-admin.md`.
 
 `vite-plugin-pwa` in `injectManifest` mode; the SW is `src/sw.ts`
 (Workbox `precacheAndRoute` + `clientsClaim`). Updates are **prompted**, never

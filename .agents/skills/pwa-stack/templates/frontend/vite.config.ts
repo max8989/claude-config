@@ -47,7 +47,10 @@ export default defineConfig({
   },
   server: {
     // The Node API (npm run dev in api/, port 3000) fronts everything,
-    // including the PocketBase auth passthrough.
-    proxy: { "/api": "http://localhost:3000" },
+    // including PocketBase auth, dashboard assets, and management API calls.
+    proxy: {
+      "/api": "http://localhost:3000",
+      "^/_($|[/?])": "http://localhost:3000",
+    },
   },
 })

@@ -33,6 +33,16 @@ At every invocation, before gathering requirements or doing project work, follow
 to this skill, summarize available updates, and ask before applying them. This
 check concerns the installed skill; generated apps keep their own update flow.
 
+## PocketBase dashboard (required)
+
+Expose the built-in PocketBase dashboard at `https://<app-domain>/_/` on the
+same public origin as the app, including in production, using PocketBase
+superuser login. This is included even when the optional in-app admin feature
+is off. Follow [the dashboard contract](references/pocketbase-admin.md) when
+generating the API gateway, service worker, and README; the dashboard needs its
+authenticated API calls as well as its HTML/assets. Keep the direct PocketBase
+host port private; public dashboard access goes through the app's Node API.
+
 ## UI rules for every project
 
 Before proposing, implementing, changing, reviewing, or verifying UI, check the
@@ -331,10 +341,13 @@ supply the PNGs (or real artwork) before shipping.
   `npx web-push generate-vapid-keys` if push is on); `docker compose up -d
   --build`; create the PocketBase superuser
   (`docker compose exec pocketbase /pb/pocketbase superuser upsert <email>
-  <password>`); open the PocketBase admin, add users with `active = true`; open
+  <password>`); open `https://<app-domain>/_/` and sign in as the PocketBase
+  superuser, add users with `active = true`; open
   the app on the API port. Remind them HTTPS (via their own reverse proxy) is
   required for service workers and Web Push in production, and that this stack
   intentionally does not include TLS/proxy.
+- Verify dashboard login and management calls through the app origin following
+  `references/pocketbase-admin.md`, including with the PWA service worker active.
 - **Tell them the session length** — the init migration sets
   `users.authToken.duration` to 30 days and the client slides it forward on
   every app open (`patterns.md` §6), so a session ends only after 30 straight
