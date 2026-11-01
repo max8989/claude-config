@@ -25,6 +25,13 @@ stack. This skill captures the **structure and patterns**, not a frozen copy of
 the source — you generate current-API code that follows the documented
 conventions, so it doesn't rot when Ionic/Vite/PocketBase ship new versions.
 
+## Startup update check (required)
+
+At every invocation, before gathering requirements or doing project work, follow
+[the skill update procedure](references/updates.md). Check `origin` for changes
+to this skill, summarize available updates, and ask before applying them. This
+check concerns the installed skill; generated apps keep their own update flow.
+
 ## UI rules for every project
 
 Before proposing, implementing, changing, reviewing, or verifying UI, check the
