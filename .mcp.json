@@ -3,24 +3,6 @@
     "chrome-devtools": {
       "command": "npx",
       "args": ["-y", "chrome-devtools-mcp@latest", "--isolated"]
-    },
-    "git": {
-      "command": "${HOME}/repos/claude-config/bin/mcp-server-git",
-      "args": []
-    },
-    "github": {
-      "command": "${HOME}/repos/claude-config/bin/github-mcp-server",
-      "args": ["stdio"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
-      }
-    },
-    "supabase": {
-      "command": "npx",
-      "args": ["-y", "@supabase/mcp-server-supabase@latest"],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
-      }
     }
   }
 }
