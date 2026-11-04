@@ -70,5 +70,6 @@
       "**Org-specific CLIs**: None configured — observed non-standard CLIs (nix, nix-shell, systemctl, google-chrome, nmcli, iwctl, etc.) reflect personal system administration, not an org tool",
       "routine under maxime/ prefix qualifiers: not applicable — no trusted repo path established"
     ]
-  }
+  },
+  "model": "sonnet"
 }

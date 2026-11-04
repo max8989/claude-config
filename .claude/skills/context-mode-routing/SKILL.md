@@ -29,6 +29,7 @@ Shell is fine for short-output commands: `git`, `mkdir`, `rm`, `mv`, `cd`, `ls`,
 
 ### File reads
 - Reading to **edit** → use the normal `Read` tool (Edit needs the content in context).
+- Global agent instructions and installed skill instructions **outside the workspace** → use the normal host file reader, or a shell reader scoped to that instruction file. This includes `SKILL.md` and its referenced instructions. Read required instructions completely. `ctx_execute_file` rejects paths outside the workspace; do not retry through `ctx_execute` or add broad filesystem allow rules. This exception does not apply to arbitrary files outside the workspace.
 - Reading to **analyze, explore, summarize** → `context-mode_ctx_execute_file(path, language, code)`. Only your printed summary enters context.
 
 ### grep / search

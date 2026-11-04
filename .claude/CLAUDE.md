@@ -39,7 +39,7 @@ the user to complete that step and resume testing afterward.
 
 ## Context routing — MUST invoke skill BEFORE these operations
 
-**Before any operation that could dump >20 lines into context**, invoke the `context-mode:context-mode` skill **first** and follow its routing guidance (`ctx_execute` / `ctx_execute_file` / `ctx_fetch_and_index`). This is non-negotiable, not "when relevant." Triggers:
+**Before any operation that could dump >20 lines into context**, invoke the `context-mode:context-mode` skill **first** and follow its routing guidance (`ctx_execute` / `ctx_execute_file` / `ctx_fetch_and_index`), except for the narrow exemptions below. This is non-negotiable, not "when relevant." Triggers:
 
 - Shell commands with large output (`find`, `ls -R`, `git log`, `npm ls`, logs, build/test output, etc.)
 - `WebFetch` of doc / article / HTML pages
@@ -48,7 +48,9 @@ the user to complete that step and resume testing afterward.
 - Log / JSON / CSV / large-blob parsing
 - Any other MCP tool whose response is likely >20 lines
 
-**Narrow exemption — do NOT generalize:** *only* `context7 query-docs` skips routing, because it returns distilled snippets by design. No other MCP server is exempt, including ones that "feel similar" (vendor doc fetchers, repository searches, etc.).
+**Narrow exemptions — do NOT generalize:**
+- `context7 query-docs` skips routing because it returns distilled snippets by design. No other MCP server is exempt, including ones that "feel similar" (vendor doc fetchers, repository searches, etc.).
+- Global agent instructions and installed skill instructions outside the current workspace (for example, `~/.claude/CLAUDE.md`, `~/.codex/plugins/cache/.../skills/.../SKILL.md`, and referenced skill instructions) use the normal host file reader, or a shell reader scoped to the specific instruction file. Read required instructions completely. `ctx_execute_file` confines reads to the workspace and rejects these paths. Do not retry a blocked read through `ctx_execute` or add broad filesystem allow rules; this exception is for instruction files, not arbitrary files outside the workspace.
 
 **Parallel-batch trap:** when issuing multiple tool calls in one message, audit *each call individually* against the trigger list. Bundling one exempt call (Context7) with non-exempt calls (repository searches, `WebFetch`, etc.) does **not** extend the exemption to the batch — each non-exempt call still requires routing through `context-mode:context-mode`.
 
