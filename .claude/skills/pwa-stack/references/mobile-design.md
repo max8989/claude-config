@@ -3,8 +3,10 @@
 Use this contract for every new `pwa-stack` project. It captures the web/PWA
 structure of `/home/maxime/repos/chinese-learning`: the shell in
 `frontend/src/App.tsx`, the Home, Library, NewContent, and Profile pages, and
-`frontend/src/theme/variables.css`. The rules below are self-contained; a new
-project does not need access to that repository.
+the shared theme. Responsive defaults follow commit
+`a3cdd0dd8d42365a58c9c42c92a2cce474510fe6`, especially `AppSidebar.tsx` and
+`theme/responsive.css`. The rules below are self-contained; a new project does
+not need access to that repository.
 
 Preserve the shell, page hierarchy, shared components, and interaction rules.
 Adapt the resource names, main activity, brand, fonts, and content language to
@@ -14,7 +16,7 @@ from `ui-ux-pro-max` within this structure.
 ## Contents
 
 1. Record the project UI contract
-2. Build the stable bottom shell
+2. Build the stable responsive shell
 3. Follow the core page hierarchy
 4. Make creation discoverable and guided
 5. Reuse components, tokens, and materials
@@ -31,6 +33,7 @@ root with the decisions for this app:
 
 - primary resource, repeatable action, and returning/resume state;
 - root destinations in order, labels, routes, and ownership of detail routes;
+- phone/tablet/desktop breakpoints, navigation modes, and per-page content widths;
 - the Home, collection, Add, main activity, detail, and Profile hierarchy;
 - the activity dock and creation entry points, where applicable;
 - chosen light/dark colors, font families, spacing, and component roles;
@@ -45,7 +48,34 @@ Merge with existing project instructions when present. Keep generated documents
 self-contained: their links must resolve inside the new project, and their
 rules must not depend on this skill or the Chinese app being installed.
 
-## 2. Build the stable bottom shell
+## 2. Build the stable responsive shell
+
+Support phone, tablet, and desktop from the initial scaffold. Choose layouts
+from the available window width, including tablet Split View and resized
+desktop windows; do not infer them from device names or user-agent strings.
+Use these defaults unless the user explicitly chooses another layout:
+
+| Window width (CSS px) | Navigation | Content layout |
+| --- | --- | --- |
+| Below 768 | Stable bottom tabs | Single column |
+| 768–1023 | Persistent 88px rail with icons and short visible labels; hide tabs | Wider browsing workspace, single-column Home |
+| 1024–1199 | Same rail | Main/secondary Home columns and two-column collection browsing |
+| 1200 and above | Persistent 248px labeled sidebar; hide tabs | Workspace capped at 1120px, with multicolumn browsing |
+
+The wider workspace starts at 768px and has a 1120px maximum, separate from
+the navigation width, with about 32px horizontal gutters. Keep readers, forms,
+and focused activity/review content at their own comfortable width (about
+680px or narrower). Apply the workspace width to Home, collections, and other
+browsing pages, with content-specific layouts for wider screens.
+
+Keep phone and feature styles as the base, then import
+`frontend/src/theme/responsive.css` after them for shared breakpoint rules.
+Use a shared app shell and a reusable `AppSidebar` for the rail/sidebar beside
+the routed content. Keep one router, page tree, and set of data/draft/activity
+state across widths. Prefer CSS media queries for layout changes so resizing
+does not remount pages or restart work. Let flex/grid content shrink with
+`min-width: 0` and `minmax(0, 1fr)`; wrap long titles and source-language text.
+Fix overflow at its source rather than clipping the page to conceal it.
 
 Use the Chinese PWA's five roles as the default, in this order:
 
@@ -58,14 +88,29 @@ Use the Chinese PWA's five roles as the default, in this order:
 | Profile | Profile | Preferences, installation, account controls |
 
 Rename roles for the domain and omit a destination with no meaningful purpose;
-do not invent features to fill five slots. Keep three to five permanent
+do not invent features to fill five slots. Keep three to five permanent phone
 destinations and record the chosen order. Use one consistent icon family with
-visible labels. Keep the creation entry central when the five-role shell fits.
+visible labels. Keep the creation entry central on phones when the five-role
+shell fits. On wider screens, make Add/Create prominent in the rail/sidebar
+and place Profile/account controls toward the bottom. Sidebar shortcuts may
+surface existing utilities; do not invent features to fill the wider shell.
+
+Use the same route definitions and root/detail ownership in every navigation
+mode. Mark the owning destination active for nested routes. Root switches
+should feel immediate, without a detail-page push animation; retain normal
+modified-click/open-in-new-tab link behavior. Hide inactive navigation from
+both the layout and keyboard/accessibility tree. Preserve visible focus and a
+Skip to content link that focuses the current visible page, including when
+other routed pages remain cached. Rail targets should be at least 56px tall,
+sidebar links at least 48px tall, and all targets at least 44px in both axes.
 
 Keep tab count and positions stable. Downloads, statistics, activity/job
 history, discovery, and similar utilities belong under their owning pages.
 Playback, uploads, timers, and other transient work use a compact dock above
-the tabs instead of another tab. The dock's main region reopens the activity;
+the phone tabs and below the content on wider screens instead of another tab.
+Align the wide dock with the content workspace, clear of the sidebar. Remove
+unused tab/dock space when those controls are hidden, while reserving room for
+active playback or offline status. The dock's main region reopens the activity;
 its play/pause or other primary control is separately tappable. A dismiss
 control, if present, must be separately named and must not discard saved work.
 
@@ -86,7 +131,11 @@ progress summary, one clear daily/continue action, then recent content or
 activity. Show a resume state when real saved work exists. Optional requests
 or discovery links remain secondary. Provide a visible creation entry without
 competing with the primary daily action. Use typography and spacing to rank
-content rather than making every statistic an equally prominent card.
+content rather than making every statistic an equally prominent card. At
+1024px and wider, place primary status/activity in the main column and existing
+shortcuts, resume details, or secondary content in an approximately 296px side
+column. Stack these in a useful reading order below that width; keep one copy
+of the content and do not invent secondary features to fill a column.
 
 ### Collection or library
 
@@ -97,6 +146,10 @@ content. Default new user-created items to newest first; preserve meaningful
 user ordering or an explicitly chosen sort. Give rows a strong title/meta
 hierarchy. The empty state explains the next step and offers a labeled Add
 action; filtered-empty and initial-empty states have different recovery copy.
+At 1024px and wider, arrange collection groups/shelves in two columns while
+keeping each group's contents readable. Reordering remains a single vertical
+list. Keep search/filter controls usable with touch and a keyboard at every
+width; desktop refresh must also be available without a pull gesture.
 
 Use swipe-to-reveal edit/delete for owned, editable rows where appropriate.
 Provide the same actions through a keyboard/screen-reader reachable menu or
@@ -108,9 +161,9 @@ Do not attach it to an Add form or an active reorder/edit gesture.
 ### Add/Create
 
 Use one central creation route for equivalent entry points from the tabs,
-Home, collection header, and empty state. Keep the same flow and draft state
-regardless of entry. Present the available input modes first, then guide the
-user through only the decisions needed for the selected mode.
+rail/sidebar, Home, collection header, and empty state. Keep the same flow and
+draft state regardless of entry. Present the available input modes first,
+then guide the user through only the decisions needed for the selected mode.
 
 ### Main activity and detail
 
@@ -153,11 +206,12 @@ confirmation, and activity-dock components as the product needs them. Extend
 those components for later screens. Keep genuinely domain-specific content in
 its own components.
 
-Start with calm opaque surfaces, readable typography, the 4/8/12/16/24/32 px
-spacing scale, and a consistent content width (about 680 px for ordinary
-reading/list pages). Keep color, typography, radii, spacing, and motion in
-semantic tokens. Define light and dark appearances for every shared component
-and its pressed, focused, disabled, loading, and error states.
+Start with calm opaque surfaces, readable typography, and the 4/8/12/16/24/32 px
+spacing scale. Use separate focused-content and browsing-workspace width
+tokens from the responsive shell contract; ordinary forms/readers stay narrow
+while collections use the wider workspace. Keep color, typography, radii,
+spacing, and motion in semantic tokens. Define light and dark appearances for
+every shared component and its pressed, focused, disabled, loading, and error states.
 
 Separate low-level content with spacing, tonal groups, dividers, and type.
 Reserve borders and shadows for meaningful containment. Use gradients only
@@ -234,16 +288,39 @@ confirmation cancellation/acceptance, draft retention and duplicate-submit
 prevention, retry behavior, stable tabs while activity starts, accessible
 owner actions, and localized-label fallback when applicable.
 
-Run browser checks in WebKit at 320×568, 390×844, and 430×932 in supported light
-and dark themes, with enlarged text and reduced motion. Assert no horizontal
-overflow, 44×44 targets, safe-area clearance, usable keyboard-open forms, and
-no content/dock/tab overlap. Test nonzero safe-area proxy values because
-desktop WebKit does not emulate an iPhone notch. Check accessible names,
-dialog focus, and contrast. Compare Home, collection, Add, activity/detail,
-and Profile against the recorded project hierarchy.
+Use Chrome DevTools MCP to exercise the running app at the relevant widths,
+inspect console errors and failed requests, and retain browser regression
+checks for these layouts:
+
+| Coverage | Viewports (CSS px) |
+| --- | --- |
+| Phone, including WebKit checks | 320×568, 390×844, 430×932 |
+| Tablet/narrow windows | 744×1133, 768×1024, 834×1194, 1194×834; also a narrow Split View width below 768 |
+| Desktop | 1024×768, 1440×900, 1920×1080 |
+
+Probe both sides of each breakpoint at 767/768, 1023/1024, and 1199/1200px.
+Run the core flows in each navigation mode; use lightweight layout assertions
+for the boundary probes. Check supported light/dark themes, enlarged text,
+reduced motion, long localized labels/source content, touch input, mouse, and
+keyboard. Assert no page-wide horizontal overflow, 44×44 minimum targets,
+safe-area clearance, usable keyboard-open forms, and no content/dock/navigation
+overlap. Test nonzero safe-area proxy values because desktop WebKit does not
+emulate an iPhone notch. Check accessible names, dialog focus, and contrast.
+
+Exercise nested detail → another root → original root, then resize between
+tabs, rail, and sidebar without losing the active route, draft, or activity.
+Verify selected navigation, modified-click links, Skip to content and the next
+Tab target, collection expansion/reordering when present, and the dock both
+active and absent. Verify mouse/keyboard access to refresh and owner actions.
+Compare Home, collection, Add, activity/detail, and Profile against the recorded
+project hierarchy and width roles. Retain representative tablet portrait,
+tablet landscape, and desktop screenshots with behavioral results in
+`UI_GUIDE.md`; include the responsive layout contract in the generated README.
 
 Treat browser automation as a regression layer. Before shipping, verify the
 installed HTTPS app on a physical iPhone: safe areas, keyboard, edge-swipe/back,
 standalone status bar, VoiceOver, offline launch, installation, and update
-lifecycle. Record evidence and unchecked limits in `UI_GUIDE.md`; passing types
-or screenshots alone does not establish these behaviors.
+lifecycle. Browser tablet emulation does not establish physical iPad/Safari or
+Split View behavior; record those checks separately, including untested limits.
+Record evidence in `UI_GUIDE.md`; passing types or screenshots alone does not
+establish these behaviors.

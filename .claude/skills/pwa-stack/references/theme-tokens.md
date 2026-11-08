@@ -43,7 +43,10 @@ Ask for a small set, derive the rest.
 | `--font-ui` / `--font-content` | shared UI and content-language families | chosen fonts with system/script fallbacks |
 | `--heading-font` | page-heading family | chosen font or `--font-ui` |
 | `--dur-fast`/`--dur-med`, `--ease`, `--ease-pop` | motion | fixed |
-| `--content-max` | max content width on wide screens | ~680px |
+| `--content-max` | focused readers, forms, and activity/review content | ~680px or narrower |
+| `--workspace-max` | wider Home and collection/browsing workspace, excluding navigation | `1120px` |
+| `--workspace-gutter` | horizontal workspace padding on wider screens | ~`32px` |
+| `--sidebar-width` | navigation rail/sidebar width by breakpoint | `88px` from 768px; `248px` from 1200px |
 
 ## Ionic bridge (do not skip)
 
@@ -96,8 +99,12 @@ Snippets and generated pages use a neutral `ui-` class prefix (`ui-row`,
 `ui-card`, `ui-skeleton`, `ui-loading-bar`, `ui-task`, `ui-check`, `ui-slide`,
 `ui-form`, `ui-section-title`, …). Keep tokens and shared component styles in
 `variables.css`; feature styles can live in `theme/<feature>.css` while consuming
-the same tokens and reusable components. Do not invent per-screen palettes,
-button shapes, or spacing scales. Keep the prefix consistent throughout the app.
+the same tokens and reusable components. Put shared breakpoint overrides in
+`theme/responsive.css`, imported after the base/feature styles. Follow the
+[responsive shell contract](mobile-design.md#2-build-the-stable-responsive-shell):
+use focused and workspace width roles rather than capping every page at 680px.
+Do not invent per-screen palettes, button shapes, or spacing scales. Keep the
+prefix consistent throughout the app.
 
 Do not turn `ui-card` into the default wrapper for every block. Generate
 separate roles for a dominant hero, grouped rows, compact actions, empty/error

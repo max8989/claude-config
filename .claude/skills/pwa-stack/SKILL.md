@@ -10,9 +10,9 @@ description: >-
   backend/database/auth — even if they don't name the stack. Triggers:
   "new PWA", "scaffold an app", "create a mobile web app", "start a project
   with PocketBase/Ionic", "installable app with notifications", "spin up a
-  frontend + backend + db". Uses the shared Chinese-learning PWA UI structure,
-  reusable light/dark components, guided creation, and mobile visual QA, with
-  project instructions for future UI changes. Asks about colors, fonts,
+  frontend + backend + db". Uses the Chinese-learning PWA structure with
+  phone/tablet/desktop navigation, light/dark components, guided creation,
+  responsive visual QA, and persistent UI rules. Asks about colors, fonts,
   password or email OTP sign-in, and features. NOT for adding
   a feature to an existing app of a different stack, or for pure static sites.
 ---
@@ -50,11 +50,18 @@ available skills and read `ui-ux-pro-max`, including for small visual fixes.
 Follow its wrapper to the canonical instructions and use web/React guidance.
 Apply its recommendations within the shared PWA structure below.
 
-Use the Chinese-learning **web/PWA** structure for new projects: stable bottom
-destinations, central Add/Create, compact daily Home, grouped collections,
-content-first activity, grouped Profile settings, and a dock for transient
+Use the Chinese-learning **web/PWA** structure for new projects: stable phone
+tabs, a tablet navigation rail, a desktop sidebar, prominent Add/Create,
+compact daily Home, grouped collections, content-first activity, grouped
+Profile settings, and a dock for transient
 work. Adapt labels and branding to the product. The shared UI references and
 generated project instructions keep later additions consistent with that system.
+
+Phone, tablet, and desktop support is the default, including resized windows
+and tablet Split View. Follow the breakpoint and content-width contract in
+`references/mobile-design.md`: wider browsing workspaces and focused
+reader/form/activity widths. Include this in the first scaffold and later UI
+changes; do not ask whether to add tablet/desktop support as an optional feature.
 
 ## What this skill contains
 
@@ -70,8 +77,9 @@ generated project instructions keep later additions consistent with that system.
   Chinese-learning email/code UI, account provisioning, mail, and API contract.
 - `references/theme-tokens.md` — the CSS-token system and how to derive a
   light/dark palette from the user's answers.
-- `references/mobile-design.md` — the shared Chinese PWA structure, project UI
-  contract, instruction templates, and visual verification rules.
+- `references/mobile-design.md` — the shared Chinese PWA structure, responsive
+  shell/widths, project UI contract, instruction templates, and
+  phone/tablet/desktop verification rules.
 - `references/features.md` — what each optional feature adds/removes.
 - `templates/` — the **stable** boilerplate worth copying verbatim (compose,
   Dockerfiles, vite PWA config, index.html, tsconfigs, init migration,
@@ -128,7 +136,8 @@ If the user already stated any of these, skip that question.
 
 Use the shared shell's roles to infer meaningful root destinations. Ask about
 navigation only when the product leaves a material choice unresolved. Clear
-creation, confirmation, safe areas, and zoom support are baseline requirements.
+creation, confirmation, safe areas, zoom support, and tablet/desktop layouts
+are baseline requirements.
 
 ### 2. Confirm current library versions
 
@@ -172,8 +181,8 @@ with the confirmed versions and the scripts from `stack.md`: frontend
 `dev/build/preview/typecheck/test/test:e2e`, api `dev` = `tsx watch src/index.ts`, `start` = `tsx
 src/index.ts`, `typecheck`, `test`), plus `.gitignore` files (ignore
 `node_modules`, `dist`, `pb_data`, `.env`).
-Configure component tests and the mobile browser checks from the shared UI
-reference; keep browser binaries and test reports out of git.
+Configure component tests and the phone/tablet/desktop browser checks from the
+shared UI reference; keep browser binaries and test reports out of git.
 
 ### 4. Generate the theme
 
@@ -193,7 +202,8 @@ styles across pages and verify contrast separately in each theme.
 Before writing components, record the UI map in the generated `UI_GUIDE.md`
 using `references/mobile-design.md`: page hierarchy, stable root destinations,
 primary action, returning/resume state, transient activity, creation flow,
-theme/components, and loading/empty/error/offline states.
+theme/components, responsive breakpoints/navigation modes, per-page width roles,
+and loading/empty/error/offline states.
 
 Start with the shared shell's Home, collection, central labeled Add/Create,
 main activity, and Profile roles. Adapt names and omit irrelevant destinations
@@ -222,6 +232,11 @@ login UI, `AuthContext`, API routes, migration, and setup instructions. For OTP,
 open directly on the email form and follow the Chinese-learning PWA's shared
 `EmailLogin` component and states. Record the mode and login states in
 `UI_GUIDE.md`; omit password/roster UI in OTP mode.
+
+Build the shared responsive shell and `theme/responsive.css` from
+`references/mobile-design.md`. Keep routes and state shared across phone
+tabs, the tablet rail, and desktop sidebar. Widen Home/collections, preserve
+focused task widths, and adapt the activity dock without leftover tab space.
 
 Build every example page from the shared UI contract: a compact daily Home,
 grouped collection with actionable empty states, one labeled creation flow,
@@ -350,16 +365,20 @@ supply the PNGs (or real artwork) before shipping.
 - Verify the chosen sign-in flow and the auth acceptance checks in
   `references/authentication.md`. For OTP, verify actual email delivery before
   describing sign-in as ready; document any pending mail configuration.
-- Run component and mobile browser checks from `references/mobile-design.md`
-  in WebKit at 320×568, 390×844, and 430×932. Check supported light/dark themes,
-  larger text, reduced motion, overflow, 44×44 targets, safe areas, dock/tab
-  clearance, keyboard-open creation, accessible names, and dialog focus.
+- Run component checks and the full phone/tablet/desktop browser matrix from
+  `references/mobile-design.md`, including WebKit phone checks, live Chrome
+  DevTools MCP verification, breakpoint boundaries, and resizing between
+  navigation modes. Check supported themes, long content, larger text, reduced
+  motion, overflow, 44×44 targets, safe areas, dock clearance, keyboard-open
+  creation, accessible names, and dialog focus. Retain tablet/desktop screenshots
+  and behavior results; document the responsive layout contract in the README.
 - Compare the generated Home, collection, Add, activity/detail, and Profile
   against `UI_GUIDE.md`. Verify the root instructions link to that guide.
   Record evidence and outstanding device checks there; browser automation is
   an approximation. Verify installed-iPhone safe areas, keyboard, Back
   gestures, VoiceOver, offline launch, installation, and update lifecycle on
-  a physical device before shipping.
+  a physical device before shipping. Distinguish browser tablet emulation from
+  physical iPad/Safari and Split View verification, recording remaining checks.
 - Print next steps: `cp .env.example .env` and fill it (generate VAPID keys with
   `npx web-push generate-vapid-keys` if push is on); `docker compose up -d
   --build`; create the PocketBase superuser
