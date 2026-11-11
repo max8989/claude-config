@@ -1,16 +1,17 @@
 ---
 name: pwa-stack
 description: >-
-  Scaffold a new installable, self-hosted PWA: React + Vite + Ionic React,
+  Scaffold an installable, self-hosted PWA: React + Vite + Ionic React,
   TanStack Query, a custom service worker and optional Web Push, backed by a
   Fastify TypeScript API that fronts PocketBase, all in Docker Compose. Use
   whenever the user wants to START a mobile-first web app/PWA with backend,
   database, or auth, even if they do not name the stack. Triggers include "new
   PWA", "scaffold an app", "create a mobile web app", "PocketBase/Ionic app",
-  and "frontend + backend + db". Includes CSS-token light/dark theming and an
-  shared Chinese-learning PWA UI structure with stable bottom navigation,
-  guided creation, reusable components, confirmations, and mobile visual QA.
-  Persist the UI rules for future changes. Ask about brand, fonts, languages,
+  and "frontend + backend + db". Includes CSS-token light/dark theming and a
+  Chinese-learning PWA UI with phone/tablet/desktop layouts, adaptive
+  navigation, guided creation, reusable components, confirmations, and
+  responsive QA.
+  Persist UI rules for later changes. Ask about brand, fonts, languages,
   password or email OTP sign-in, and optional features before generating.
   Includes isolated prod/dev deployment and optional telemetry via the
   independent observability skill. Not for a
@@ -50,11 +51,18 @@ available skills and read `ui-ux-pro-max`, including for small visual fixes.
 Follow its wrapper to the canonical instructions and use web/React guidance.
 Apply its recommendations within the shared PWA structure below.
 
-Use the Chinese-learning **web/PWA** structure for new projects: stable bottom
-destinations, central Add/Create, compact daily Home, grouped collections,
-content-first activity, grouped Profile settings, and a dock for transient
+Use the Chinese-learning **web/PWA** structure for new projects: stable phone
+tabs, a tablet navigation rail, a desktop sidebar, prominent Add/Create,
+compact daily Home, grouped collections, content-first activity, grouped
+Profile settings, and a dock for transient
 work. Adapt labels and branding to the product. The shared UI references and
 generated project instructions keep later additions consistent with that system.
+
+Phone, tablet, and desktop support is the default, including resized windows
+and tablet Split View. Follow the breakpoint and content-width contract in
+`references/mobile-design.md`: wider browsing workspaces and focused
+reader/form/activity widths. Include this in the first scaffold and later UI
+changes; do not ask whether to add tablet/desktop support as an optional feature.
 
 ## What this skill contains
 
@@ -70,7 +78,8 @@ generated project instructions keep later additions consistent with that system.
 - `references/theme-tokens.md` — the CSS-token system and how to derive a
   light/dark palette from the user's answers.
 - `references/mobile-design.md` — entry point to the shared Chinese PWA
-  structure, project UI contract, instruction templates, and verification rules.
+  structure, responsive shell/widths, project UI contract, instruction templates,
+  and phone/tablet/desktop verification rules.
 - `references/features.md` — what each optional feature adds/removes.
 - `references/deployment.md` — server setup, isolated prod/dev deployments,
   configuration checks, health verification, and failure handling.
@@ -130,8 +139,8 @@ answers the user already supplied:
 
 Infer three to five root destinations from the product. Ask about navigation
 only when more than one sensible hierarchy remains. Do not ask whether to make
-creation discoverable, confirm sign out, support safe areas, or preserve zoom;
-those are baseline quality requirements.
+creation discoverable, confirm sign out, support safe areas, preserve zoom, or
+support tablet/desktop layouts; those are baseline quality requirements.
 
 ### 2. Confirm current library versions
 
@@ -180,8 +189,8 @@ with the confirmed versions and the scripts from `stack.md`: frontend
 src/index.ts`, `start` = `tsx src/index.ts`, `typecheck`, `test`), plus
 `.gitignore` files (ignore `node_modules`, `dist`, `pb_data`, `pb_data_dev`,
 `.env`, `.env.*`, with `!.env.example`). Configure
-Vitest + Testing Library for component tests and Playwright + axe for the mobile
-browser matrix; keep browser binaries and reports out of git.
+Vitest + Testing Library for component tests and Playwright + axe for the
+phone/tablet/desktop browser matrix; keep browser binaries and reports out of git.
 
 ### 4. Generate the theme
 
@@ -200,7 +209,8 @@ include robust fallbacks and verify an offline launch.
 Before writing components, record the UI map in the generated `UI_GUIDE.md`
 using `references/mobile-design.md`: page hierarchy, stable root destinations,
 primary action, returning/resume state, transient activity, creation flow,
-theme/components, and loading/empty/error/offline states.
+theme/components, responsive breakpoints/navigation modes, per-page width roles,
+and loading/empty/error/offline states.
 
 Start with the shared shell's Home, collection, central labeled Add/Create,
 main activity, and Profile roles. Adapt names and omit irrelevant destinations
@@ -232,6 +242,10 @@ open directly on the email form and follow the Chinese-learning PWA's shared
 
 Make the interaction blueprint concrete in the generated example:
 
+- Build the shared responsive shell and `theme/responsive.css` from
+  `references/mobile-design.md`. Keep routes and state shared across phone
+  tabs, the tablet rail, and desktop sidebar. Widen Home/collections, preserve
+  focused task widths, and adapt the activity dock without leftover tab space.
 - Give Create a visible text label in the shell, on Home/collection, and in the
   empty state; use an add or compose icon, never sparkles/stars/wands for
   generic creation.
@@ -277,12 +291,14 @@ and the application usable when it is disabled or the receiver is unavailable.
 - Verify the chosen sign-in flow and the auth acceptance checks in
   `references/authentication.md`. For OTP, verify actual email delivery before
   describing sign-in as ready; document any pending mail configuration.
-- Run the browser matrix from `references/mobile-design.md` in WebKit at
-  320×568, 390×844, and 430×932. Check light/dark, reduced motion, horizontal
-  overflow, 44×44 targets, safe-area/non-overlap, the keyboard-open create
-  flow, dialog focus, and accessible names. Use deterministic visual fallbacks
-  for screenshots. Override the app's safe-area proxy tokens with nonzero test
-  insets because desktop WebKit does not emulate an iPhone notch.
+- Run the full phone/tablet/desktop browser matrix from
+  `references/mobile-design.md`, including WebKit phone checks, live Chrome
+  DevTools MCP verification, breakpoint boundaries, and resizing between
+  navigation modes. Check light/dark, long content, larger text, reduced
+  motion, overflow, 44×44 targets, keyboard/focus, safe areas, and dock clearance.
+  Use deterministic visual fallbacks and nonzero safe-area test insets as
+  specified in that reference. Retain tablet/desktop screenshots and behavior
+  results, and document the responsive layout contract in the generated README.
 - Check the generated Home, collection, Add, activity/detail, and Profile
   against `UI_GUIDE.md`, and record UI verification evidence and remaining
   device checks there. Verify that both root instruction files link to that
@@ -290,6 +306,8 @@ and the application usable when it is disabled or the receiver is unavailable.
 - State explicitly that Playwright/WebKit is only an approximation. Include a
   physical installed-iPhone acceptance pass for standalone safe areas, status
   bar, keyboard, edge swipe, VoiceOver, offline launch, and the update flow.
+  Distinguish browser tablet emulation from physical iPad/Safari and Split View
+  verification, recording any remaining device checks.
 - Verify `bash -n deploy.sh` and resolve both Compose targets without printing
   secrets, following `references/deployment.md`. Check executable mode, branch
   guards, distinct projects/data/ports, and failure exits before handoff.

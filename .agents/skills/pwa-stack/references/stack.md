@@ -22,7 +22,7 @@ releases page.
 | `@tanstack/react-query` | ^5 | Server-state cache: queries, optimistic mutations, invalidation |
 | `pocketbase` (JS SDK) | ^0.26 | **Auth only** on the client (selected `authWithPassword` / `authWithOTP`, `authRefresh`, `authStore`) |
 | `vitest` + `jsdom` + Testing Library | current compatible | Component tests for interaction, routing, confirmation, and state boundaries |
-| `@playwright/test` + `@axe-core/playwright` | current compatible | WebKit mobile viewport, screenshot, overflow, and accessibility regression checks |
+| `@playwright/test` + `@axe-core/playwright` | current compatible | Phone/tablet/desktop viewport, screenshot, overflow, and accessibility regression checks; include WebKit phone coverage |
 
 Fonts: default to the platform system stack for native rendering and reliable
 offline launch. If the user chooses branded fonts, prefer bundled/self-hosted

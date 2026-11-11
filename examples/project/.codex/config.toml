@@ -1,0 +1,19 @@
+# Copy this file to a project's .codex/config.toml and commit it.
+# Each contributor authenticates with their own accounts; keep tokens out of Git.
+
+[mcp_servers.chrome-devtools]
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@latest", "--isolated"]
+
+[mcp_servers.git]
+command = "uvx"
+# The Git server currently requires the MCP Python SDK 1.x API.
+args = ["--with", "mcp<2", "mcp-server-git"]
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+# Run gh auth login once; the credential stays in each user's GitHub CLI storage.
+http_headers_helper = """python3 -c 'import json, subprocess; print(json.dumps({"Authorization": "Bearer " + subprocess.check_output(["gh", "auth", "token", "--hostname", "github.com"], text=True).strip()}))'"""
+
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp"

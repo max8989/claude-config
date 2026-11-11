@@ -1,7 +1,7 @@
 approval_policy = "never"
 default_permissions = ":danger-full-access"
 approvals_reviewer = "user"
-model = "gpt-6.1-sol"
+model = "gpt-6-astra"
 model_reasoning_effort = "max"
 plan_mode_reasoning_effort = "xhigh"
 [projects."/home/maxime/repos/nixos-dotfiles"]
@@ -58,6 +58,21 @@ trust_level = "trusted"
 [projects."/home/maxime/repos/agentic-audio"]
 trust_level = "trusted"
 
+[projects."/home/maxime/repos/family-discord"]
+trust_level = "trusted"
+
+[projects."/home/maxime/repos/personal-agent"]
+trust_level = "trusted"
+
+[projects."/home/maxime/repos/belle-pro-project"]
+trust_level = "trusted"
+
+[projects."/home/maxime/repos/codecrafters-redis-csharp"]
+trust_level = "trusted"
+
+[projects."/home/maxime/repos/course-notes"]
+trust_level = "trusted"
+
 [tui]
 vim_mode_default = true
 status_line = ["model-with-reasoning", "current-dir"]
@@ -80,31 +95,34 @@ source = "https://github.com/mksglu/context-mode.git"
 source_type = "git"
 source = "https://github.com/addyosmani/agent-skills.git"
 
-[plugins."context-mode@context-mode"]
-enabled = true
-
 [plugins."agent-skills@agent-skills"]
 enabled = true
 
 [hooks.state]
 
 [hooks.state."context-mode@context-mode:.codex-plugin/hooks.json:pre_tool_use:0:0"]
-trusted_hash = "sha256:56da0c4249dc7af048f42ae458fb83931926a8af41ec6fab5ae819ff3a8c83ae"
+trusted_hash = "sha256:9b85e297ad70747b368c22e9c4e34281800709512705e3661c97cd3e721f9e22"
+trusted_content_hash = "sha256:b2e43bdfb2a94f342017e8dbaca1e1c7c4cdc516539ac8421e116c3b9a4decc8"
 
 [hooks.state."context-mode@context-mode:.codex-plugin/hooks.json:post_tool_use:0:0"]
-trusted_hash = "sha256:0d237345f8d46110d36cd0ef08e79b55fa151a07691dee36d492aa6f64bc0efd"
+trusted_hash = "sha256:5c9b252fba4884901034c3c1593e56cc1833efaf23cb24d0cde47974e2b94bff"
+trusted_content_hash = "sha256:b2e43bdfb2a94f342017e8dbaca1e1c7c4cdc516539ac8421e116c3b9a4decc8"
 
 [hooks.state."context-mode@context-mode:.codex-plugin/hooks.json:pre_compact:0:0"]
 trusted_hash = "sha256:ac1f9e5eb71ca262492150381d8f078b897056fc691f9973fc56d7b1b402e648"
+trusted_content_hash = "sha256:28558a653ffb89c1eacc213345765652c7def6ef892f7fd1825afbd756bccdc6"
 
 [hooks.state."context-mode@context-mode:.codex-plugin/hooks.json:session_start:0:0"]
-trusted_hash = "sha256:a6cc6a322d0931bdd68a5969e523cd71e6eedccab4850e8996c8948311173618"
+trusted_hash = "sha256:36fd81896ba86e6dcc421f18e29c7a6c09bc76c2ee7562ede426dfb92e9dcf10"
+trusted_content_hash = "sha256:b2e43bdfb2a94f342017e8dbaca1e1c7c4cdc516539ac8421e116c3b9a4decc8"
 
 [hooks.state."context-mode@context-mode:.codex-plugin/hooks.json:user_prompt_submit:0:0"]
-trusted_hash = "sha256:114549c484c131b94782d3424527dd1042d48bc3a8616a11299acdf60b112572"
+trusted_hash = "sha256:7d2143376a6f28c939b711bde2e99125e2387e1a6a2a95da069df2324daf602e"
+trusted_content_hash = "sha256:b2e43bdfb2a94f342017e8dbaca1e1c7c4cdc516539ac8421e116c3b9a4decc8"
 
 [hooks.state."context-mode@context-mode:.codex-plugin/hooks.json:stop:0:0"]
 trusted_hash = "sha256:9205c1763e40c0256ab334e2e96c037c1cdf5b8bfaddba31ed19d93d3388586a"
+trusted_content_hash = "sha256:28558a653ffb89c1eacc213345765652c7def6ef892f7fd1825afbd756bccdc6"
 
 [mcp_servers.playwright]
 command = "npx"
@@ -113,3 +131,16 @@ args = ["-y", "@playwright/mcp@latest"]
 [mcp_servers.chrome-devtools]
 command = "npx"
 args = ["-y", "chrome-devtools-mcp@latest", "--isolated"]
+
+[mcp_servers.git]
+command = "uvx"
+# The Git server currently requires the MCP Python SDK 1.x API.
+args = ["--with", "mcp<2", "mcp-server-git"]
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+# Read the existing GitHub CLI credential at connection time.
+http_headers_helper = """python3 -c 'import json, subprocess; print(json.dumps({"Authorization": "Bearer " + subprocess.check_output(["gh", "auth", "token", "--hostname", "github.com"], text=True).strip()}))'"""
+
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp"

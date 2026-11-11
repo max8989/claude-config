@@ -1,0 +1,3 @@
+interface:
+  display_name: "Hyprland Desktop"
+  short_description: "Control windows, screenshots, Chrome and Quickshell"

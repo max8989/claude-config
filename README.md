@@ -149,6 +149,31 @@ Before stowing an existing installation, merge any host-specific Codex settings
 you want to keep into `.codex/config.toml`. `stow.sh` backs up conflicting files
 before linking the repository's versions. Restart Codex to load the new defaults.
 
+### Share MCP servers with a project
+
+Copy [`examples/project/.codex/config.toml`](examples/project/.codex/config.toml)
+to your project's `.codex/config.toml` and commit it. Codex loads project MCP
+configuration after each contributor trusts the project. Keep project MCP
+definitions in this file and Claude Code definitions in `.mcp.json`.
+See the [official Codex MCP documentation](https://developers.openai.com/codex/mcp).
+
+The template configures Chrome DevTools, Git, GitHub, and Supabase using commands
+on `PATH` and hosted endpoints. Contributors need Node.js/npm, `uv`/`uvx`,
+Python 3, and `gh`. Git runs with the MCP Python SDK constrained below 2 because
+the server still uses the 1.x API. GitHub reads each contributor's existing
+GitHub CLI credential at connection time; no token is stored in the TOML file.
+Authenticate once from the project directory:
+
+```bash
+gh auth login
+codex mcp login supabase
+```
+
+Restart Codex and use `/mcp` to check the connections. Supabase remains configured
+but requires authorization before its tools are available. The global Codex
+configuration also includes these servers and preserves the existing Playwright
+entry.
+
 ## Reusable application skills
 
 - [`pwa-stack`](.agents/skills/pwa-stack/SKILL.md) creates the PWA application
@@ -163,6 +188,11 @@ before linking the repository's versions. Restart Codex to load the new defaults
   the connected TickTick app plugin. Invoke `$ticktick` to view, add, update,
   reschedule, complete, or delete reminders. Stow exposes it globally at
   `~/.agents/skills/ticktick/`.
+- [`hyprland-desktop`](.claude/skills/hyprland-desktop/SKILL.md) controls the local
+  Hyprland/Quickshell desktop, captures screenshots, and opens previews in a
+  specific existing Chrome window. It distinguishes the project terminal's
+  workspace from current focus and the DevTools MCP browser from ordinary
+  Chrome. Shared links expose it to Claude, Codex, and Agent Skills clients.
 
 ## Maintenance
 

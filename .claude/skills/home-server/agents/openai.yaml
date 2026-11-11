@@ -1,0 +1,4 @@
+interface:
+  display_name: "Home Server"
+  short_description: "Access the home server directly or through its VPN"
+  default_prompt: "Use $home-server to connect to my home server, trying SSH before activating the VPN if needed."

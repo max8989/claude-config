@@ -29,6 +29,12 @@ available, create a test account yourself and continue. If registration or
 sign-in requires a user-only step such as email verification or MFA, ask
 the user to complete that step and resume testing afterward.
 
+## Desktop control and browser placement
+
+For Hyprland/Quickshell desktop interaction, desktop screenshots, or placing
+a visible browser opened during development, use the shared
+[`hyprland-desktop`](skills/hyprland-desktop/SKILL.md) skill.
+
 ## Hard rules — check BEFORE answering
 
 **Before stating any third-party SDK / API / CLI / library / cloud-service specifics** (method names, field names, webhook events, default behaviors, pricing tiers, regional coverage, version differences, config flags), call Context7 first — `resolve-library-id` then `query-docs`. Applies to **every** vendor regardless of how well-known: Plaid, Stripe, Supabase, AWS, GCP, Vercel, Next.js, React, Prisma, Django, Neovim, Hyprland, Waybar, etc. Do **not** rely on training data alone, even for libraries you "know." If Context7 has no coverage, say so explicitly and fall back to WebFetch on the vendor's official docs — never silently guess.
